@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Critix{% endblock %}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+
+        body {
+            background: #1a1a2e;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── NAVBAR ── */
+        .navbar {
+            background: #16213e;
+            border-bottom: 1px solid #1e2d47;
+            padding: 0 32px;
+            height: 72px;
+            display: flex;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        /* Logo — left */
+        .navbar-logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #e94560;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        /* Centre search area — absolute so it's truly centred */
+        .navbar-center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 0;
+            background: #0f2340;
+            border: 1.5px solid #2e4070;
+            border-radius: 40px;
+            overflow: hidden;
+            height: 52px;
+            width: 660px;
+            max-width: calc(100vw - 420px);
+        }
+
+        .navbar-search-icon {
+            padding: 0 14px;
+            color: #5b8dee;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .navbar-search-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            min-width: 0;
+            padding: 0 6px;
+        }
+        .navbar-search-input::placeholder { color: #4a5a7a; }
+
+        .navbar-divider {
+            width: 1px;
+            height: 26px;
+            background: #2e4070;
+            flex-shrink: 0;
+        }
+
+        .navbar-pill-select {
+            background: transparent;
+            border: none;
+            color: #c5d0e8;
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+            padding: 0 20px;
+            height: 100%;
+            appearance: none;
+            -webkit-appearance: none;
+            flex-shrink: 0;
+            font-weight: 500;
+        }
+        .navbar-pill-select option { background: #16213e; color: #fff; }
+
+        /* Right side */
+        .navbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        /* Watchlist pill */
+        .navbar-watchlist {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 16px;
+            background: #0f2340;
+            border: 1px solid #253351;
+            border-radius: 30px;
+            text-decoration: none;
+            color: #d0d7e3;
+            font-size: 0.88rem;
+            font-weight: 500;
+            white-space: nowrap;
+            transition: border-color 0.2s;
+            flex-shrink: 0;
+        }
+        .navbar-watchlist:hover { border-color: #e94560; color: #fff; }
+
+        .watchlist-badge {
+            background: #e94560;
+            color: #fff;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 1px 7px;
+            border-radius: 10px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        /* Profile dropdown */
+        .profile-dropdown { position: relative; }
+
+        .profile-trigger {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 5px 10px 5px 5px;
+            border-radius: 30px;
+            background: #0f2340;
+            border: 1px solid #253351;
+            transition: border-color 0.2s;
+            user-select: none;
+        }
+        .profile-trigger:hover { border-color: #e94560; }
+
+        .profile-avatar {
+            width: 34px;
+            height: 34px;
+            background: #e94560;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+        }
+
+        .profile-name {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #d0d7e3;
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .profile-arrow {
+            color: #6b7a9a;
+            font-size: 0.7rem;
+            transition: transform 0.2s;
+        }
+        .profile-dropdown.open .profile-arrow { transform: rotate(180deg); }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: calc(100% + 8px);
+            background: #16213e;
+            border: 1px solid #253351;
+            border-radius: 12px;
+            min-width: 210px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            overflow: hidden;
+            z-index: 9999;
+        }
+        .profile-dropdown.open .dropdown-menu { display: block; }
+
+        .dropdown-header {
+            padding: 14px 16px 10px;
+            border-bottom: 1px solid #253351;
+        }
+        .dropdown-header .dh-name { font-weight: 700; font-size: 0.95rem; color: #fff; }
+        .dropdown-header .dh-sub  { font-size: 0.78rem; color: #6b7a9a; margin-top: 2px; }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 16px;
+            color: #c5cde0;
+            text-decoration: none;
+            font-size: 0.88rem;
+            transition: background 0.15s, color 0.15s;
+        }
+        .dropdown-item:hover { background: #0f3460; color: #fff; }
+        .dropdown-item .di-icon { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+
+        .dropdown-divider { height: 1px; background: #253351; margin: 4px 0; }
+
+        .dropdown-item.logout { color: #e94560; }
+        .dropdown-item.logout:hover { background: rgba(233,69,96,0.1); color: #ff6b84; }
+
+        /* Auth buttons */
+        .navbar-auth-btn {
+            padding: 8px 18px;
+            border-radius: 24px;
+            border: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .navbar-auth-login  { background: transparent; border: 1px solid #253351; color: #d0d7e3; }
+        .navbar-auth-login:hover  { border-color: #e94560; color: #fff; }
+        .navbar-auth-signup { background: #e94560; color: #fff; }
+        .navbar-auth-signup:hover { background: #c72c41; }
+
+        /* ── MAIN CONTENT ── */
+        .main-content {
+            flex: 1;
+            padding: 28px 32px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* ── SHARED UTILITY ── */
+        .btn { padding: 10px 22px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; text-decoration: none; display: inline-block; }
+        .btn-primary   { background: #e94560; color: #fff; }
+        .btn-primary:hover   { background: #c72c41; }
+        .btn-secondary { background: #5b8dee; color: #fff; }
+        .btn-secondary:hover { background: #3b6ed4; }
+        .btn-danger    { background: #ef4444; color: #fff; }
+        .btn-danger:hover    { background: #dc2626; }
+        .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 860px) {
+            .navbar { flex-wrap: wrap; height: auto; padding: 10px 16px; gap: 8px; }
+            .navbar-center { position: static; transform: none; order: 3; width: 100%; max-width: 100%; }
+            .main-content { padding: 16px; }
+        }
+        @media (max-width: 540px) {
+            .profile-name { display: none; }
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<nav class="navbar">
+
+    <!-- LEFT: Logo -->
+    <a href="{% url 'home' %}" class="navbar-logo">🎬 Critix</a>
+
+    <!-- CENTRE: Search pill (auto-submits) -->
+    {% block navbar_search %}
+    <form class="navbar-center" id="navSearchForm" method="GET" action="{% url 'movie_list' %}">
+        <span class="navbar-search-icon">🔍</span>
+        <input class="navbar-search-input" type="text" name="q" id="navQ"
+               value="{{ request.GET.q }}" placeholder="Search movies…"
+               autocomplete="off">
+        <div class="navbar-divider"></div>
+        <select name="genre" id="navGenre" class="navbar-pill-select">
+            <option value="">All Genres</option>
+            {% for g in all_genres %}
+            <option value="{{ g }}" {% if request.GET.genre == g %}selected{% endif %}>{{ g }}</option>
+            {% endfor %}
+        </select>
+        <div class="navbar-divider"></div>
+        <select name="sort" id="navSort" class="navbar-pill-select">
+            <option value="">Sort By</option>
+            <option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Newest</option>
+            <option value="oldest" {% if request.GET.sort == 'oldest' %}selected{% endif %}>Oldest</option>
+            <option value="rating" {% if request.GET.sort == 'rating' %}selected{% endif %}>Top Rated</option>
+            <option value="az"     {% if request.GET.sort == 'az'     %}selected{% endif %}>A–Z</option>
+            <option value="za"     {% if request.GET.sort == 'za'     %}selected{% endif %}>Z–A</option>
+        </select>
+    </form>
+    {% endblock %}
+
+    <!-- RIGHT: Watchlist + Profile -->
+    <div class="navbar-right">
+        {% if user.is_authenticated %}
+
+            <a href="{% url 'watchlist_list' %}" class="navbar-watchlist">
+                ❤️ Watchlist
+                {% if navbar_watchlist_count %}
+                <span class="watchlist-badge">{{ navbar_watchlist_count }}</span>
+                {% endif %}
+            </a>
+
+            <div class="profile-dropdown" id="profileDropdown">
+                <div class="profile-trigger" onclick="toggleProfileDropdown()">
+                    <div class="profile-avatar">{{ user.username.0|upper }}</div>
+                    <span class="profile-name">{{ user.username }}</span>
+                    <span class="profile-arrow">▾</span>
+                </div>
+                <div class="dropdown-menu">
+                    <div class="dropdown-header">
+                        <div class="dh-name">{{ user.username }}</div>
+                        <div class="dh-sub">{{ user.email }}</div>
+                    </div>
+                    <a href="{% url 'user_profile' %}" class="dropdown-item">
+                        <span class="di-icon">👤</span> Profile Dashboard
+                    </a>
+                    <a href="{% url 'watched_list' %}" class="dropdown-item">
+                        <span class="di-icon">👁️</span> Watched Movies
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="{% url 'user_profile' %}?action=change_username" class="dropdown-item">
+                        <span class="di-icon">✏️</span> Change Username
+                    </a>
+                    <a href="{% url 'user_profile' %}?action=change_password" class="dropdown-item">
+                        <span class="di-icon">🔒</span> Change Password
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="{% url 'logout' %}" class="dropdown-item logout">
+                        <span class="di-icon">🚪</span> Logout
+                    </a>
+                </div>
+            </div>
+
+        {% else %}
+            <a href="{% url 'login' %}"    class="navbar-auth-btn navbar-auth-login">Login</a>
+            <a href="{% url 'register' %}" class="navbar-auth-btn navbar-auth-signup">Sign Up</a>
+        {% endif %}
+    </div>
+</nav>
+
+<div class="main-content">
+    {% block content %}{% endblock %}
+</div>
+
+<script>
+// ── Profile dropdown ──
+function toggleProfileDropdown() {
+    document.getElementById('profileDropdown').classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+    var dd = document.getElementById('profileDropdown');
+    if (dd && !dd.contains(e.target)) dd.classList.remove('open');
+});
+
+// ── Auto-search ──
+(function () {
+    var form   = document.getElementById('navSearchForm');
+    var input  = document.getElementById('navQ');
+    var genre  = document.getElementById('navGenre');
+    var sort   = document.getElementById('navSort');
+    if (!form) return;
+
+    var timer;
+
+    // Typing in search box — debounce 500 ms
+    if (input) {
+        input.addEventListener('input', function () {
+            clearTimeout(timer);
+            timer = setTimeout(function () { form.submit(); }, 500);
+        });
+    }
+
+    // Changing dropdowns — submit immediately
+    if (genre) genre.addEventListener('change', function () { form.submit(); });
+    if (sort)  sort.addEventListener('change',  function () { form.submit(); });
+}());
+</script>
+
+</body>
+</html>

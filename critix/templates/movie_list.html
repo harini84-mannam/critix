@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+
+{% block title %}All Movies - Critix{% endblock %}
+
+{% block content %}
+<style>
+    .movies-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 30px;
+        margin-top: 40px;
+    }
+    
+    .movie-card {
+        background: #16213e;
+        border-radius: 15px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        text-decoration: none;
+        display: block;
+    }
+    
+    .movie-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 10px 30px rgba(233, 69, 96, 0.3);
+    }
+    
+    .movie-poster {
+        width: 100%;
+        height: 350px;
+        background: #0f3460;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+    
+    .movie-poster img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .no-poster {
+        font-size: 3rem;
+        color: #333;
+    }
+    
+    .movie-info {
+        padding: 20px;
+    }
+    
+    .movie-info h3 {
+        font-size: 1.2rem;
+        margin-bottom: 8px;
+        color: #fff;
+    }
+    
+    .movie-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+    }
+    
+    .movie-genre {
+        background: #0f3460;
+        color: #e94560;
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+    }
+    
+    .movie-year {
+        color: #888;
+        font-size: 0.9rem;
+    }
+    
+    .movie-reviews {
+        margin-top: 10px;
+        color: #aaa;
+        font-size: 0.9rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        color: #aaa;
+        grid-column: 1 / -1;
+    }
+    
+    .empty-state h2 {
+        font-size: 2rem;
+        margin-bottom: 20px;
+    }
+    
+    .empty-icon {
+        font-size: 5rem;
+        margin-bottom: 20px;
+    }
+    
+   
+    .scroll-container-group {
+        position: fixed;
+        bottom: 30px;
+        right: 30px; 
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 2000;
+    }
+
+    .scroll-btn {
+        background: #e94560;
+        color: white;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
+        transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease, background 0.3s;
+        
+        opacity: 0;
+        visibility: hidden;
+    }
+    
+    .scroll-btn:hover {
+        background: #c72c41;
+        transform: scale(1.1);
+    }
+    
+   
+    .scroll-btn.show {
+        opacity: 1;
+        visibility: visible;
+    }
+</style>
+
+<h1 id="top" style="text-align: center; margin-bottom: 30px;">🎬 All Movies</h1>
+
+<div class="movies-grid">
+    {% for movie in movies %}
+        <a href="{% url 'movie_detail' movie.id %}" class="movie-card">
+            <div class="movie-poster">
+                {% if movie.poster %}
+                    <img src="{{ movie.poster.url }}" alt="{{ movie.title }}">
+                {% else %}
+                    <span class="no-poster">🎬</span>
+                {% endif %}
+            </div>
+            <div class="movie-info">
+                <h3>{{ movie.title }}</h3>
+                <div class="movie-meta">
+                    <span class="movie-genre">{{ movie.genre }}</span>
+                    <span class="movie-year">{{ movie.release_year }}</span>
+                </div>
+                <p class="movie-reviews">
+                    ⭐ {{ movie.avg_rating|floatformat:1|default:"0.0" }}/5
+                    •
+                    {{ movie.reviews.count }} reviews
+                </p>            
+                </div>
+        </a>
+    {% empty %}
+        <div class="empty-state">
+            <div class="empty-icon">🎬</div>
+            <h2>No movies found</h2>
+            <p>No movies available yet.</p>
+        </div>
+    {% endfor %}
+</div>
+
+<div id="bottom" style="height: 10px;"></div>
+
+<div class="scroll-container-group">
+    <button class="scroll-btn" id="backToTop" onclick="scrollToTop()">↑</button>
+    <button class="scroll-btn" id="goToBottom" onclick="scrollToBottom()">↓</button>
+</div>
+
+{% if movies.has_other_pages %}
+<div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin: 45px 0 20px 0; font-family: 'Segoe UI', sans-serif;">
+    
+   
+    {% if movies.has_previous %}
+        <a href="?page={{ movies.previous_page_number }}{% if filters %}&{{ filters }}{% endif %}" 
+           style="padding: 10px 18px; background: #16213e; border: 1px solid #253351; border-radius: 25px; color: #fff; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: 0.2s;"
+           onmouseover="this.style.background='#e94560'; this.style.borderColor='#e94560';"
+           onmouseout="this.style.background='#16213e'; this.style.borderColor='#253351';">
+            ← Prev
+        </a>
+    {% else %}
+        <span style="padding: 10px 18px; background: #16213e; border: 1px solid #1a1a2e; border-radius: 25px; color: #555; font-weight: 600; font-size: 0.9rem; cursor: not-allowed;">
+            ← Prev
+        </span>
+    {% endif %}
+
+    {% for i in movies.paginator.page_range %}
+        {% if movies.number == i %}
+            <span style="padding: 10px 18px; background: #e94560; border: 1px solid #e94560; border-radius: 25px; color: #fff; font-weight: bold; font-size: 0.9rem; box-shadow: 0 4px 10px rgba(233, 69, 96, 0.3);">
+                {{ i }}
+            </span>
+        {% elif i > movies.number|add:-3 and i < movies.number|add:3 %}
+            <a href="?page={{ i }}{% if filters %}&{{ filters }}{% endif %}" 
+               style="padding: 10px 18px; background: #16213e; border: 1px solid #253351; border-radius: 25px; color: #fff; text-decoration: none; font-size: 0.9rem; transition: 0.2s;"
+               onmouseover="this.style.background='#0f3460'; this.style.borderColor='#e94560';"
+               onmouseout="this.style.background='#16213e'; this.style.borderColor='#253351';">
+                {{ i }}
+            </a>
+        {% endif %}
+    {% endfor %}
+
+    {% if movies.has_next %}
+        <a href="?page={{ movies.next_page_number }}{% if filters %}&{{ filters }}{% endif %}" 
+           style="padding: 10px 18px; background: #16213e; border: 1px solid #253351; border-radius: 25px; color: #fff; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: 0.2s;"
+           onmouseover="this.style.background='#e94560'; this.style.borderColor='#e94560';"
+           onmouseout="this.style.background='#16213e'; this.style.borderColor='#253351';">
+            Next →
+        </a>
+    {% else %}
+        <span style="padding: 10px 18px; background: #16213e; border: 1px solid #1a1a2e; border-radius: 25px; color: #555; font-weight: 600; font-size: 0.9rem; cursor: not-allowed;">
+            Next →
+        </span>
+    {% endif %}
+
+</div>
+{% endif %}
+
+<script>
+    const backToTopBtn = document.getElementById("backToTop");
+    const goToBottomBtn = document.getElementById("goToBottom");
+
+    window.onscroll = function() {
+        handleScrollTracking();
+    };
+
+    function handleScrollTracking() {
+        const currentScroll = window.scrollY || document.documentElement.scrollTop;
+        const totalHeight = document.documentElement.scrollHeight;
+        const viewportHeight = window.innerHeight;
+
+        if (currentScroll < 25) {
+            backToTopBtn.classList.remove("show");
+        } else {
+            backToTopBtn.classList.add("show");
+        }
+
+        if (Math.ceil(currentScroll + viewportHeight) >= (totalHeight - 25)) {
+            goToBottomBtn.classList.remove("show");
+        } else {
+            goToBottomBtn.classList.add("show");
+        }
+    }
+    
+    function scrollToTop() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
+
+    function scrollToBottom() {
+        window.scrollTo({
+            top: document.documentElement.scrollHeight,
+            behavior: 'smooth'
+        });
+    }
+
+    handleScrollTracking();
+
+    
+</script>
+{% endblock %}

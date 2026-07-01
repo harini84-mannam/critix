@@ -1,0 +1,103 @@
+{% extends 'admin_portal/base.html' %}
+
+{% block page_title %}Dashboard{% endblock %}
+{% block breadcrumb %}Home / Dashboard{% endblock %}
+
+{% block content %}
+<style>
+    .app-card {
+        background: #16213e;
+        border: 1px solid #253351;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        overflow: hidden;
+    }
+
+    .app-card-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #253351;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .app-model-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 13px 20px;
+        border-bottom: 1px solid #253351;
+        gap: 16px;
+        transition: background 0.15s;
+    }
+
+    .app-model-row:last-child { border-bottom: none; }
+    .app-model-row:hover { background: rgba(233,69,96,0.04); }
+
+    .app-model-link {
+        color: #5b8dee;
+        text-decoration: none;
+        font-size: 0.95rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .app-model-link:hover { text-decoration: underline; }
+
+    .app-model-count {
+        background: #253351;
+        color: #aab4c8;
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 10px;
+        min-width: 22px;
+        text-align: center;
+    }
+
+    .app-model-actions {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .app-card-empty {
+        padding: 16px 20px;
+        color: #8892a4;
+        font-size: 0.9rem;
+    }
+</style>
+
+
+{% for app in apps_overview %}
+<div class="app-card">
+    <div class="app-card-header">
+        
+        {{ app.app_name }}
+    </div>
+    {% for m in app.models %}
+    <div class="app-model-row">
+        <a href="{{ m.list_url }}" class="app-model-link">
+            {{ m.label }}
+            <span class="app-model-count">{{ m.count }}</span>
+        </a>
+        <div class="app-model-actions">
+            {% if m.add_url %}
+            <a href="{{ m.add_url }}" class="btn btn-primary btn-sm">➕ Add</a>
+            {% endif %}
+            <a href="{{ m.list_url }}" class="btn btn-secondary btn-sm">📋 View</a>
+        </div>
+    </div>
+    {% empty %}
+    <div class="app-card-empty">No models found.</div>
+    {% endfor %}
+</div>
+{% empty %}
+<p style="color:#8892a4;">No apps found.</p>
+{% endfor %}
+{% endblock %}

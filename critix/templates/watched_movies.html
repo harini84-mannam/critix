@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Watched Movies{% endblock %}
+
+{% block content %}
+<div style="max-width:1200px; margin:0 auto; padding:20px; font-family:'Segoe UI', sans-serif;">
+
+    <!-- Header -->
+    <div style="background:#16213e; padding:25px; border-radius:10px; margin-bottom:30px; border-left:5px solid #2ecc71;">
+        <h1 style="margin:0; color:#fff;">👁️ Watched Movies</h1>
+        <p style="color:#aaa; margin:5px 0 0 0;">Movies you've marked as watched.</p>
+    </div>
+
+    <h2 style="margin-top:0; margin-bottom:20px; color:#2ecc71;">{{ my_watched.count }} movie{{ my_watched.count|pluralize }} watched</h2>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:20px; margin-bottom:40px;">
+        {% for item in my_watched %}
+            <div style="background:#16213e; border-radius:10px; overflow:hidden; position:relative; border:1px solid #222d4a;">
+                <a href="{% url 'movie_detail' item.movie.id %}" style="text-decoration:none; color:#fff;">
+                    {% if item.movie.poster %}
+                        <img src="{{ item.movie.poster.url }}" style="width:100%; height:250px; object-fit:cover;" alt="{{ item.movie.title }}">
+                    {% else %}
+                        <div style="width:100%; height:250px; background:#0f3460; display:flex; align-items:center; justify-content:center;">🎬</div>
+                    {% endif %}
+                    <div style="padding:12px;">
+                        <h4 style="margin:0; font-size:1rem; text-overflow:ellipsis; white-space:nowrap; overflow:hidden;" title="{{ item.movie.title }}">{{ item.movie.title }}</h4>
+                        <p style="color:#aaa; font-size:0.8rem; margin-top:4px; margin-bottom:0;">{{ item.movie.genre }}</p>
+                        <p style="color:#555; font-size:0.72rem; margin-top:4px; margin-bottom:0;">Watched {{ item.watched_at|date:"d M Y" }}</p>
+                    </div>
+                </a>
+                <a href="{% url 'toggle_watched' item.movie.id %}" style="position:absolute; top:10px; right:10px; background:rgba(26,26,46,0.9); color:#2ecc71; border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:0.9rem; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.3);" title="Unmark as watched">✕</a>
+            </div>
+        {% empty %}
+            <p style="color:#aaa; grid-column:1/-1; background:#16213e; padding:20px; border-radius:10px; text-align:center;">
+                You haven't marked any movies as watched yet. Use the 👁️ icon on a movie page to track what you've watched!
+            </p>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Portal - Critix{% endblock %}</title>
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Segoe UI', sans-serif; 
+        }
+        body { 
+            background: #1a1a2e; 
+            color: #fff; 
+            display: flex; 
+            min-height: 100vh; 
+        }
+
+        .admin-sidebar {
+            width: 280px;
+            background: #16213e;
+            border-right: 1px solid #253351;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid #253351;
+        }
+
+        .sidebar-logo {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: #e94560;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 16px 0;
+            overflow-y: auto;
+        }
+
+        .nav-section {
+            margin: 8px 0;
+        }
+
+        .nav-section-title {
+            padding: 12px 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6b7a9a;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: #d0d7e3;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: #0f3460;
+            color: #fff;
+            border-left-color: #e94560;
+        }
+
+        .nav-link.active {
+            background: rgba(233, 69, 96, 0.1);
+            color: #e94560;
+            border-left-color: #e94560;
+        }
+
+        .nav-icon { 
+            font-size: 1.2rem; 
+            width: 24px; 
+            flex-shrink: 0;
+            text-align: center; 
+        }
+
+        .nav-dropdown-toggle {
+            width: 100%;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            justify-content: flex-start;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        .nav-dropdown-label {
+            flex: 1 1 auto;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            min-width: 0;
+            text-align: left;
+        }
+
+        .nav-dropdown-arrow {
+            flex-shrink: 0;
+            transition: transform 0.2s;
+            color: #6b7a9a;
+            font-size: 0.8rem;
+        }
+
+        .nav-dropdown-toggle.open .nav-dropdown-arrow {
+            transform: rotate(180deg);
+        }
+
+        .nav-dropdown-menu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.25s ease;
+            background: #0d1830;
+        }
+
+        .nav-dropdown-menu.open {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .nav-dropdown-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 20px 10px 52px;
+            color: #aab4c8;
+            text-decoration: none;
+            font-size: 0.85rem;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav-dropdown-item:hover {
+            background: #0f3460;
+            color: #fff;
+        }
+
+        .nav-dropdown-item.active {
+            background: rgba(233, 69, 96, 0.1);
+            color: #e94560;
+            border-left-color: #e94560;
+        }
+
+        .nav-dropdown-count {
+            background: #253351;
+            color: #d0d7e3;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+            min-width: 22px;
+            text-align: center;
+        }
+
+        .sidebar-footer {
+            border-top: 1px solid #253351;
+            padding: 16px 20px;
+        }
+
+        .admin-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #253351;
+            padding-bottom: 12px;
+        }
+
+        .admin-avatar {
+            width: 40px;
+            height: 40px;
+            background: #e94560;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .admin-info .name { 
+            font-weight: 600; 
+            font-size: 0.9rem; 
+        }
+        .admin-info .email { 
+            font-size: 0.75rem; 
+            color: #8892a4; 
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 10px;
+            background: #dc2626;
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+        }
+
+        .logout-btn:hover { 
+            background: #b91c1c; 
+        }
+
+        .admin-main {
+            flex: 1;
+            margin-left: 280px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .admin-header {
+            background: #16213e;
+            border-bottom: 1px solid #253351;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-header h1 {
+            font-size: 1.8rem;
+            color: #fff;
+        }
+
+        .admin-header-breadcrumb {
+            color: #8892a4;
+            font-size: 0.9rem;
+        }
+
+        .admin-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .stat-card {
+            background: #16213e;
+            border: 1px solid #253351;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            border-color: #e94560;
+            transform: translateY(-2px);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(233, 69, 96, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: #e94560;
+        }
+
+        .stat-content h3 { 
+            font-size: 0.85rem; 
+            color: #8892a4; 
+            text-transform: uppercase; 
+            margin-bottom: 4px; 
+        }
+        .stat-content .value { 
+            font-size: 2rem; 
+            font-weight: bold; 
+            color: #fff; 
+        }
+
+        .grid-2 { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 20px; 
+        }
+        .grid-4 { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px; 
+        }
+        .table-container {
+            background: #16213e;
+            border: 1px solid #253351;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #0f3460;
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #8892a4;
+            border-bottom: 1px solid #253351;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #253351;
+            font-size: 0.9rem;
+        }
+
+        tr:hover { 
+            background: rgba(233, 69, 96, 0.05); 
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary { 
+            background: #e94560; 
+            color: #fff; 
+        }
+        .btn-primary:hover { 
+            background: #c72c41; 
+        }
+
+        .btn-secondary { 
+            background: #5b8dee; 
+            color: #fff; 
+        }
+        .btn-secondary:hover { 
+            background: #3b6ed4; 
+        }
+
+        .btn-danger { background: #ef4444; color: #fff; }
+        .btn-danger:hover { background: #dc2626; }
+
+        .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            background: #0f3460;
+            border: 1px solid #253351;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus { border-color: #e94560; }
+
+        .form-input option { background: #16213e; color: #fff; }
+
+        .error { color: #ff6b6b; font-size: 0.85rem; margin-top: 4px; }
+        .success { background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; color: #22c55e; padding: 12px; border-radius: 6px; margin-bottom: 16px; }
+
+        @media (max-width: 1024px) {
+            .admin-sidebar { width: 250px; }
+            .admin-main { margin-left: 250px; }
+            .grid-4 { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            .admin-sidebar { position: absolute; width: 220px; height: auto; max-height: 400px; }
+            .admin-main { margin-left: 0; }
+            .grid-4, .grid-2 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">🎬 Critix Admin</div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <a href="{% url 'admin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                    <span class="nav-icon">☰</span> Dashboard
+                </a>
+
+                {% for app in apps_overview %}
+                <button type="button" class="nav-link nav-dropdown-toggle {% if app.is_open %}open{% endif %}" title="{{ app.app_name }}" onclick="document.getElementById('appDropdown-{{ app.app_label }}').classList.toggle('open'); this.classList.toggle('open');">
+                    
+                    <span class="nav-dropdown-label">{{ app.app_name }}</span>
+                    <span class="nav-dropdown-arrow">▾</span>
+                </button>
+                <div class="nav-dropdown-menu {% if app.is_open %}open{% endif %}" id="appDropdown-{{ app.app_label }}">
+                    {% for m in app.models %}
+                        <a href="{{ m.list_url }}" class="nav-dropdown-item {% if request.resolver_match.kwargs.model_name == m.model_name %}active{% endif %}">
+                            <span>{{ m.label }}</span>
+                            <span class="nav-dropdown-count">{{ m.count }}</span>
+                        </a>
+                    {% empty %}
+                        <span class="nav-dropdown-item" style="color:#6b7a9a; cursor:default;">No models found</span>
+                    {% endfor %}
+                </div>
+                {% empty %}
+                <span class="nav-link" style="color:#6b7a9a; cursor:default;">No apps found</span>
+                {% endfor %}
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="admin-user">
+                <div class="admin-avatar">{{ user.username.0|upper }}</div>
+                <div class="admin-info">
+                    <div class="name">{{ user.username }}</div>
+                    <div class="email">{{ user.email }}</div>
+                </div>
+            </div>
+            <a href="{% url 'logout' %}" class="logout-btn">➜] Logout</a>
+        </div>
+    </div>
+
+    <div class="admin-main">
+        <div class="admin-header">
+            <div>
+                <h1>{% block page_title %}Admin Portal{% endblock %}</h1>
+                <div class="admin-header-breadcrumb">{% block breadcrumb %}{% endblock %}</div>
+            </div>
+        </div>
+
+        <div class="admin-content">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+</body>
+</html>

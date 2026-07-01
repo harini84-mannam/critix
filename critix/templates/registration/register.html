@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register - Critix</title>
+    <link rel="stylesheet" href="/static/css/auth.css">
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <h1>🎬 Critix</h1>
+        <h2>Register</h2>
+        
+        {% if errors %}
+            <div class="error">
+                {% for e in errors %}
+                    <p>{{ e }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        <form method="post">
+            {% csrf_token %}
+            <input type="text" name="username" class="form-input" placeholder="Username" required>
+            <input type="email" name="email" class="form-input" placeholder="Email" required>
+            <input type="password" name="password1" class="form-input" placeholder="Password" required>
+            <input type="password" name="password2" class="form-input" placeholder="Confirm Password" required>
+            <button type="submit" class="btn">Create Account</button>
+        </form>
+        
+        <p>Already have an account? <a href="{% url 'login' %}">Login</a></p>
+    </div>
+</body>
+</html>

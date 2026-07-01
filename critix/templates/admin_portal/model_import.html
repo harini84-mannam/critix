@@ -1,0 +1,105 @@
+{% extends 'admin_portal/base.html' %}
+{% block page_title %}Import {{ verbose_name_pl }}{% endblock %}
+{% block breadcrumb %}Admin / <a href="{% url 'admin_model_list' model_name %}" style="color:#5b8dee;text-decoration:none">{{ verbose_name_pl }}</a> / Import{% endblock %}
+
+{% block content %}
+<div style="max-width:620px;">
+    <h2 style="font-size:1.4rem; margin-bottom:8px;">📥 Import {{ verbose_name_pl }}</h2>
+    <p style="color:#8892a4; margin-bottom:28px; font-size:.9rem;">
+        Upload a CSV or Excel (.xlsx) file to bulk-import records.
+    </p>
+
+    {% if parse_error %}
+    <div style="background:rgba(255,107,107,.1); border:1px solid rgba(255,107,107,.3);
+                color:#ff8080; padding:16px; border-radius:8px; margin-bottom:20px; font-size:.9rem;">
+        ❌ {{ parse_error }}
+    </div>
+    {% endif %}
+
+    <div style="background:#16213e; border:1px solid #253351; border-radius:12px; padding:28px;">
+
+        <div style="background:#0f3460; border:1px solid #253351; border-radius:8px; padding:16px; margin-bottom:24px;">
+            <div style="font-weight:600; margin-bottom:10px; font-size:.9rem; color:#5b8dee;">📋 Expected columns for {{ verbose_name }}</div>
+            <p style="color:#8892a4; font-size:.85rem; margin:0 0 14px 0; line-height:1.6;">
+                First row : column headers. Case-insensitive (<code style="color:#aab4c8">Title</code> and <code style="color:#aab4c8">title</code> both work).
+                Missing columns are skipped. Supported: <strong style="color:#d0d7e3">.csv</strong> and <strong style="color:#d0d7e3">.xlsx</strong>.
+            </p>
+           
+        </div>
+
+        <form method="POST" action="{% url 'admin_model_import_preview' model_name %}"
+              enctype="multipart/form-data" id="importForm">
+            {% csrf_token %}
+            <input type="hidden" name="action" id="actionField" value="preview">
+
+            <div class="form-group">
+                <label class="form-label">Select file</label>
+                <div style="border:2px dashed #253351; border-radius:8px; padding:36px 20px;
+                            text-align:center; transition:border-color .2s; cursor:pointer;"
+                     id="dropzone"
+                     ondragover="this.style.borderColor='#e94560'; event.preventDefault();"
+                     ondragleave="this.style.borderColor='#253351';"
+                     ondrop="handleDrop(event)">
+                    <div style="font-size:2.5rem; margin-bottom:10px">📂</div>
+                    <div style="color:#d0d7e3; margin-bottom:8px">Drag & drop a file here, or</div>
+                    <label style="color:#5b8dee; cursor:pointer; font-weight:600; text-decoration:underline;">
+                        Browse files
+                        <input type="file" name="import_file" id="fileInput" accept=".csv,.xlsx,.xls"
+                               style="display:none" onchange="showFileName(this)">
+                    </label>
+                    <div id="fileName" style="color:#22c55e; font-size:.875rem; margin-top:12px; font-weight:500;"></div>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:24px; flex-wrap:wrap;">
+                <button type="button" onclick="submitWith('preview')"
+                        class="btn btn-primary" style="flex:1; padding:13px; min-width:160px;">
+                    👁 Preview &amp; Confirm
+                </button>
+            </div>
+
+            <div style="margin-top:16px; text-align:center;">
+                <a href="{% url 'admin_model_list' model_name %}"
+                   style="color:#8892a4; font-size:.85rem; text-decoration:none;">← Cancel</a>
+            </div>
+        </form>
+
+        <div style="margin-top:24px; padding-top:20px; border-top:1px solid #253351; text-align:center;">
+            <span style="color:#8892a4; font-size:.85rem;">Need a template? </span>
+            <a href="{% url 'admin_model_export' model_name %}?fmt=csv"
+               style="color:#5b8dee; font-size:.85rem; text-decoration:none;">
+                Download empty CSV template →
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function showFileName(input) {
+    var el = document.getElementById('fileName');
+    el.textContent = input.files[0] ? '📄 ' + input.files[0].name : '';
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('dropzone').style.borderColor = '#253351';
+    var file = e.dataTransfer.files[0];
+    if (file) {
+        var dt = new DataTransfer();
+        dt.items.add(file);
+        document.getElementById('fileInput').files = dt.files;
+        document.getElementById('fileName').textContent = '📄 ' + file.name;
+    }
+}
+
+function submitWith(action) {
+    var fileInput = document.getElementById('fileInput');
+    if (!fileInput.files.length) {
+        alert('Please select a file first.');
+        return;
+    }
+    document.getElementById('actionField').value = action;
+    document.getElementById('importForm').submit();
+}
+</script>
+{% endblock %}

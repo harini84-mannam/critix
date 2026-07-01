@@ -1,0 +1,540 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ movie.title }} - Critix{% endblock %}
+
+{% block content %}
+<style>
+    .movie-header { display: flex; gap: 30px; margin-bottom: 30px; }
+    .movie-poster { flex: 1; max-width: 300px; }
+    .movie-poster img { width: 100%; border-radius: 10px; }
+    .movie-info { flex: 2; }
+    .movie-info h1 { margin-bottom: 10px; }
+    .movie-info .genre { color: #aaa; }
+    .movie-info .description { margin-top: 20px; }
+    .reviews-section { margin-top: 40px; }
+
+    .review-card {
+        background: #16213e;
+        padding: 18px 20px;
+        margin-top: 18px;
+        border-radius: 12px;
+        border: 1px solid #253351;
+    }
+
+    .review-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .review-rating { color: #ffc107; }
+
+    .review-form { margin-top: 30px; background: #16213e; padding: 20px; border-radius: 10px; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; }
+    .form-group select, .form-group textarea {
+        width: 100%; padding: 10px; border-radius: 5px;
+        background: #0f3460; color: #fff; border: none;
+    }
+
+    .login-btn {
+        display: inline-block;
+        background: #e94560;
+        color: white;
+        padding: 15px 30px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 16px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    .login-btn:hover { background: #c72c41; transform: scale(1.05); box-shadow: 0 4px 15px rgba(237,15,15,0.96); }
+
+    .watchlist-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        margin-top: 20px;
+        color: #fff;
+    }
+    .watchlist-btn:hover { transform: scale(1.03); }
+
+    .star-rating {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+        gap: 4px;
+        font-size: 2rem;
+        margin-bottom: 16px;
+    }
+    .star-rating input { 
+        display: none; 
+    }
+    .star-rating label { 
+        cursor: pointer; 
+        color: #444; 
+        transition: 0.2s; 
+    }
+    .star-rating label:hover,
+    .star-rating label:hover ~ label { 
+        color: #ffc107; 
+    }
+    .star-rating input:checked ~ label { 
+        color: #ffc107; 
+    }
+    .review-actions-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 14px;
+        flex-wrap: wrap;
+    }
+
+    .vote-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        border: 1px solid #253351;
+        background: transparent;
+        color: #aaa;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .vote-btn:hover { 
+        border-color: #e94560; 
+        color: #fff; 
+    }
+    .vote-btn.active-like { border-color: #22c55e; background: rgba(34,197,94,0.12); color: #22c55e; }
+    .vote-btn.active-dislike { border-color: #ef4444; background: rgba(239,68,68,0.1); color: #ef4444; }
+
+    .reply-toggle-btn {
+        padding: 6px 14px;
+        border-radius: 20px;
+        border: 1px solid #253351;
+        background: transparent;
+        color: #aaa;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .reply-toggle-btn:hover { border-color: #5b8dee; color: #5b8dee; }
+
+    .report-btn {
+        margin-left: auto;
+        padding: 6px 14px;
+        border-radius: 20px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: #666;
+        font-size: 0.82rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .report-btn:hover { color: #f87171; border-color: rgba(248,113,113,0.3); }
+    .report-btn.reported { color: #888; cursor: default; font-style: italic; }
+
+    .replies-section { margin-top: 14px; border-top: 1px solid #253351; padding-top: 12px; }
+
+    .reply-item {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .reply-avatar {
+        width: 28px;
+        height: 28px;
+        background: #0f3460;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: bold;
+        color: #e94560;
+        flex-shrink: 0;
+    }
+
+    .reply-body { flex: 1; }
+    .reply-meta { font-size: 0.78rem; color: #888; margin-bottom: 4px; }
+    .reply-meta strong { color: #c7d2fe; }
+    .reply-text { font-size: 0.88rem; color: #d1d5db; line-height: 1.5; }
+
+    .reply-form-area {
+        display: none;
+        margin-top: 10px;
+    }
+    .reply-form-area.open { display: block; }
+
+    .reply-input {
+        width: 100%;
+        padding: 10px 14px;
+        background: #0f3460;
+        border: 1px solid #253351;
+        border-radius: 8px;
+        color: #fff;
+        font-size: 0.88rem;
+        resize: vertical;
+        outline: none;
+        transition: border-color 0.2s;
+        margin-bottom: 8px;
+    }
+    .reply-input:focus { border-color: #5b8dee; }
+
+    .reply-submit-btn {
+        padding: 7px 18px;
+        background: #5b8dee;
+        border: none;
+        border-radius: 20px;
+        color: #fff;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .reply-submit-btn:hover { background: #3b6ed4; }
+
+    .report-modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.65);
+        z-index: 5000;
+        align-items: center;
+        justify-content: center;
+    }
+    .report-modal-overlay.active { display: flex; }
+
+    .report-modal-box {
+        background: #16213e;
+        border: 1px solid #253351;
+        border-radius: 14px;
+        padding: 30px;
+        width: 380px;
+        max-width: 95vw;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        position: relative;
+        animation: dropIn 0.2s ease;
+    }
+    @keyframes dropIn {
+        from { opacity:0; transform: translateY(-8px); }
+        to   { opacity:1; transform: translateY(0); }
+    }
+    .report-modal-box h3 { margin: 0 0 16px; font-size: 1.1rem; }
+    .report-close {
+        position: absolute; top: 14px; right: 16px;
+        background: none; border: none; color: #aaa;
+        font-size: 1.3rem; cursor: pointer;
+    }
+    .report-close:hover { color: #fff; }
+    .report-option { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .report-option input[type="radio"] { accent-color: #e94560; }
+    .report-option label { font-size: 0.9rem; cursor: pointer; }
+    .report-submit {
+        width: 100%; padding: 11px;
+        background: #e94560; border: none; border-radius: 8px;
+        color: #fff; font-weight: 600; cursor: pointer; margin-top: 8px;
+        transition: background 0.2s;
+    }
+    .report-submit:hover { background: #c72c41; }
+</style>
+
+<div style="margin-bottom: 20px;">
+    <a href="{% url 'movie_list' %}"
+       style="display:inline-block; padding:10px 18px; background:#16213e; color:white;
+              text-decoration:none; border-radius:8px; border:1px solid #253351; transition:0.3s;">
+        ← Back to Movies
+    </a>
+</div>
+
+<div class="movie-header">
+    <div class="movie-poster">
+        {% if movie.poster %}
+            <img src="{{ movie.poster.url }}" alt="{{ movie.title }}">
+        {% endif %}
+    </div>
+    <div class="movie-info">
+        <h1>{{ movie.title }}</h1>
+        <p class="genre">{{ movie.genre }} | {{ movie.release_year }}</p>
+        <p style="color:#ffc107; font-size:1.1rem;">⭐ {{ movie.average_rating|floatformat:1 }}/5</p>
+        <p class="description">{{ movie.description }}</p>
+
+        <div class="watchlist-wrapper" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+            {% if user.is_authenticated %}
+                {% if in_watchlist %}
+                    <a href="{% url 'toggle_watchlist' movie.id %}" class="watchlist-btn" style="background:#0f3460; border:1px solid #e94560; margin-top:20px;">
+                        ❤️ Remove from Watchlist
+                    </a>
+                {% else %}
+                    <a href="{% url 'toggle_watchlist' movie.id %}" class="watchlist-btn" style="background:#e94560; margin-top:20px;">
+                        🤍 Add to Watchlist
+                    </a>
+                {% endif %}
+
+                {% if in_watched %}
+                    <a href="{% url 'toggle_watched' movie.id %}" class="watchlist-btn" style="background:#0f3460; border:1px solid #2ecc71; margin-top:20px;" title="Marked as watched - click to unmark">
+                        👁️ Watched
+                    </a>
+                {% else %}
+                    <a href="{% url 'toggle_watched' movie.id %}" class="watchlist-btn" style="background:#2ecc71; margin-top:20px;" title="Mark this movie as watched">
+                        👁️ Mark as Watched
+                    </a>
+                {% endif %}
+            {% else %}
+                <p style="margin-top:20px; font-size:0.9rem; color:#888;">
+                    <a href="{% url 'login' %}" style="color:#e94560; text-decoration:none;">Log in</a> to add this movie to your watchlist.
+                </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="reviews-section">
+    <h2>Reviews ({{ reviews_data|length }})</h2>
+
+    {% for item in reviews_data %}
+        {% with review=item.review %}
+        <div class="review-card" id="review-{{ review.id }}">
+            <div class="review-header">
+                <div>
+                    <strong>{{ review.user.username }}</strong>
+                    <span style="margin-left:10px; color:#888; font-size:0.82rem;">{{ review.created_at|date:"d M Y" }}</span>
+                </div>
+                <span style="color:#ffc107;">⭐ {{ review.rating }}/5</span>
+            </div>
+
+            <p style="margin-top:10px; color:#d1d5db; line-height:1.6;">{{ review.comment }}</p>
+
+            <!-- Actions row -->
+            <div class="review-actions-row">
+                {% if user.is_authenticated %}
+                    <button class="vote-btn {% if item.user_vote == 'like' %}active-like{% endif %}"
+                            data-action="like"
+                            data-review="{{ review.id }}">
+                        👍 <span class="like-count">{{ item.likes }}</span>
+                    </button>
+                    <button class="vote-btn {% if item.user_vote == 'dislike' %}active-dislike{% endif %}"
+                            data-action="dislike"
+                            data-review="{{ review.id }}">
+                        👎 <span class="dislike-count">{{ item.dislikes }}</span>
+                    </button>
+                    <button class="reply-toggle-btn"
+                            data-action="reply"
+                            data-review="{{ review.id }}">
+                        💬 Reply
+                    </button>
+                    {% if not item.already_reported and review.user != user %}
+                        <button class="report-btn"
+                                data-action="report"
+                                data-review="{{ review.id }}">
+                            🚩 Report
+                        </button>
+                    {% elif item.already_reported %}
+                        <span class="report-btn reported">🚩 Reported</span>
+                    {% endif %}
+                {% else %}
+                    <span style="font-size:0.82rem; color:#555;">👍 {{ item.likes }} &nbsp; 👎 {{ item.dislikes }}</span>
+                {% endif %}
+            </div>
+
+            <!-- Replies -->
+            {% if item.replies %}
+            <div class="replies-section">
+                {% for reply in item.replies %}
+                <div class="reply-item">
+                    <div class="reply-avatar">{{ reply.user.username.0|upper }}</div>
+                    <div class="reply-body">
+                        <div class="reply-meta">
+                            <strong>{{ reply.user.username }}</strong>
+                            &nbsp;·&nbsp; {{ reply.created_at|date:"d M Y" }}
+                        </div>
+                        <div class="reply-text">{{ reply.comment }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if user.is_authenticated %}
+            <div class="reply-form-area" id="reply-form-{{ review.id }}">
+                <form method="POST" action="{% url 'reply_review' review.id %}">
+                    {% csrf_token %}
+                    <textarea class="reply-input" name="comment" rows="2" placeholder="Write a reply..."></textarea>
+                    <button type="submit" class="reply-submit-btn">Post Reply</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+        {% endwith %}
+    {% empty %}
+        <p>No reviews yet. Be the first to review!</p>
+    {% endfor %}
+</div>
+
+<hr style="border-color:#16213e; margin:30px 0;">
+
+{% if user.is_authenticated %}
+    {% if user_review %}
+        <div style="background:#16213e; border:1px solid #253351; padding:24px; border-radius:12px; text-align:center;">
+            <p style="color:#8892a4; margin-bottom:16px;">You have already reviewed this movie.</p>
+            <a href="{% url 'edit_review' user_review.id %}"
+               style="display:inline-block; padding:11px 28px; background:#e94560; color:#fff;
+                      text-decoration:none; border-radius:24px; font-size:0.95rem; font-weight:600;
+                      transition:background 0.2s;"
+               onmouseover="this.style.background='#c72c41'"
+               onmouseout="this.style.background='#e94560'">
+                ✏️ Edit Your Review
+            </a>
+        </div>
+    {% else %}
+        <h3 style="margin-bottom:20px;">Add Your Review</h3>
+        <div style="background:#16213e; border:1px solid #253351; border-radius:12px; padding:24px;">
+        <form method="post">
+            {% csrf_token %}
+
+            <label style="display:block; font-size:0.88rem; color:#8892a4; margin-bottom:8px; font-weight:600; letter-spacing:.03em;">YOUR RATING</label>
+            <div class="star-rating">
+                <input type="radio" name="rating" value="5" id="star5"><label for="star5">★</label>
+                <input type="radio" name="rating" value="4" id="star4"><label for="star4">★</label>
+                <input type="radio" name="rating" value="3" id="star3"><label for="star3">★</label>
+                <input type="radio" name="rating" value="2" id="star2"><label for="star2">★</label>
+                <input type="radio" name="rating" value="1" id="star1"><label for="star1">★</label>
+            </div>
+
+            <label style="display:block; font-size:0.88rem; color:#8892a4; margin-bottom:8px; font-weight:600; letter-spacing:.03em;">YOUR REVIEW</label>
+            <textarea name="comment" rows="4"
+                style="width:100%; padding:12px 16px; background:#0f3460; border:1px solid #253351;
+                       border-radius:10px; color:#fff; font-size:0.92rem; font-family:'Segoe UI',sans-serif;
+                       line-height:1.6; resize:vertical; outline:none; transition:border-color 0.2s;
+                       min-height:100px;"
+                placeholder="Share your thoughts about this movie…"
+                onfocus="this.style.borderColor='#5b8dee'" onblur="this.style.borderColor='#253351'"></textarea>
+
+            <button type="submit"
+                style="margin-top:14px; padding:11px 28px; background:#e94560; border:none;
+                       border-radius:24px; color:#fff; font-size:0.95rem; font-weight:600;
+                       cursor:pointer; transition:background 0.2s;"
+                onmouseover="this.style.background='#c72c41'" onmouseout="this.style.background='#e94560'">
+                Submit Review
+            </button>
+        </form>
+        </div>
+    {% endif %}
+
+    {% if recommended_movies %}
+    <hr style="border-color:#16213e; margin:40px 0;">
+    <h2 style="margin-bottom:20px; color:#fff;">Because you watched {{ movie.title }}</h2>
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:20px;">
+        {% for m in recommended_movies %}
+        <a href="{% url 'movie_detail' m.id %}" style="background:#16213e; border-radius:10px; overflow:hidden; text-decoration:none; color:white;">
+            {% if m.poster %}<img src="{{ m.poster.url }}" style="width:100%; height:220px; object-fit:cover;">{% endif %}
+            <div style="padding:10px;">
+                <h4 style="margin:0;">{{ m.title }}</h4>
+                <p style="color:#aaa; font-size:0.8rem;">⭐ {{ m.avg_rating|floatformat:1|default:"0.0" }}/5</p>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+{% else %}
+<div style="display:flex; justify-content:center; width:100%; margin:40px 0; padding:10px 0;">
+    <a href="{% url 'login' %}?next={{ request.path }}"
+       style="display:inline-flex; align-items:center; justify-content:center; gap:12px;
+              background:#e94560; color:#ffffff; text-decoration:none; font-size:1.2rem;
+              font-weight:600; padding:16px 36px; border-radius:8px;
+              box-shadow:0 4px 15px rgba(46,204,113,0.3); transition:all 0.2s ease-in-out;"
+       onmouseover="this.style.background='#c72c41';"
+       onmouseout="this.style.background='#e94560';">
+        Login to write a review!
+    </a>
+</div>
+{% endif %}
+
+<!-- ── Report Modal ── -->
+<div class="report-modal-overlay" id="reportModal">
+    <div class="report-modal-box">
+        <button class="report-close" onclick="closeReportModal()">✕</button>
+        <h3>🚩 Report Review</h3>
+        <form method="POST" id="reportForm" action="">
+            {% csrf_token %}
+            <div class="report-option"><input type="radio" name="reason" id="r_spam" value="spam" checked><label for="r_spam">Spam</label></div>
+            <div class="report-option"><input type="radio" name="reason" id="r_off" value="offensive"><label for="r_off">Offensive / Hate Speech</label></div>
+            <div class="report-option"><input type="radio" name="reason" id="r_spl" value="spoiler"><label for="r_spl">Spoilers</label></div>
+            <div class="report-option"><input type="radio" name="reason" id="r_irr" value="irrelevant"><label for="r_irr">Not relevant</label></div>
+            <div class="report-option"><input type="radio" name="reason" id="r_oth" value="other"><label for="r_oth">Other</label></div>
+            <button type="submit" class="report-submit">Submit Report</button>
+        </form>
+    </div>
+</div>
+
+<script>
+
+function getCookie(name) {
+    var parts = document.cookie.split(';');
+    for (var i = 0; i < parts.length; i++) {
+        var pair = parts[i].trim().split('=');
+        if (pair[0] === name) return decodeURIComponent(pair[1]);
+    }
+    return '';
+}
+
+document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-action]');
+    if (!btn) return;
+
+    var action   = btn.getAttribute('data-action');
+    var reviewId = btn.getAttribute('data-review');
+
+    if (action === 'like' || action === 'dislike') {
+        e.preventDefault();
+        fetch('/review/' + reviewId + '/like/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({ value: action }),
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            var card        = document.getElementById('review-' + reviewId);
+            var likeBtn     = card.querySelector('[data-action="like"]');
+            var dislikeBtn  = card.querySelector('[data-action="dislike"]');
+
+            likeBtn.querySelector('.like-count').textContent    = data.likes;
+            dislikeBtn.querySelector('.dislike-count').textContent = data.dislikes;
+
+            likeBtn.classList.remove('active-like');
+            dislikeBtn.classList.remove('active-dislike');
+
+            if (data.user_vote === 'like')    likeBtn.classList.add('active-like');
+            if (data.user_vote === 'dislike') dislikeBtn.classList.add('active-dislike');
+        });
+    }
+
+    if (action === 'reply') {
+        var area = document.getElementById('reply-form-' + reviewId);
+        area.classList.toggle('open');
+        if (area.classList.contains('open')) {
+            area.querySelector('textarea').focus();
+        }
+    }
+
+    if (action === 'report') {
+        document.getElementById('reportForm').action = '/review/' + reviewId + '/report/';
+        document.getElementById('reportModal').classList.add('active');
+    }
+});
+function closeReportModal() {
+    document.getElementById('reportModal').classList.remove('active');
+}
+document.getElementById('reportModal').addEventListener('click', function (e) {
+    if (e.target === this) closeReportModal();
+});
+document.querySelector('.report-close').addEventListener('click', closeReportModal);
+</script>
+{% endblock %}

@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Review - Critix{% endblock %}
+
+{% block content %}
+
+<style>
+    .star-rating-edit {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-start;
+    gap: 6px;
+    font-size: 2rem;
+}
+
+.star-rating-edit input {
+    display: none;
+}
+
+.star-rating-edit label {
+    cursor: pointer;
+    color: #444;
+    transition: 0.2s;
+}
+
+.star-rating-edit label:hover,
+.star-rating-edit label:hover ~ label {
+    color: #ffc107;
+}
+
+
+.star-rating-edit input:checked ~ label {
+    color: #ffc107;
+}
+</style>
+<div style="max-width: 650px; margin: 50px auto; padding: 0 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    
+    <div style="margin-bottom: 24px;">
+        <a href="{% url 'movie_detail' movie.id %}" 
+           style="display: inline-flex; align-items: center; gap: 8px; color: #a2a8b4; text-decoration: none; font-size: 0.95rem; font-weight: 500; transition: all 0.2s;"
+           onmouseover="this.style.color='#e94560'; this.style.transform='translateX(-3px)';" 
+           onmouseout="this.style.color='#a2a8b4'; this.style.transform='translateX(0)';">
+            <span style="font-size: 1.1rem;">←</span> Back to {{ movie.title }}
+        </a>
+    </div>
+
+    <div style="background: #16213e; padding: 40px; border-radius: 16px; border: 1px solid #253351; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);">
+        
+        <h2 style="margin: 0 0 8px 0; color: #ffffff; font-size: 1.75rem; font-weight: 600; letter-spacing: -0.5px;"> Edit Your Review</h2>
+        <p style="color: #a2a8b4; margin: 0 0 32px 0; font-size: 0.95rem; line-height: 1.5;">
+            Updating your rating and thoughts for <strong style="color: #e94560; font-weight: 600;">{{ movie.title }}</strong>
+        </p>
+
+        <form method="POST" style="display: flex; flex-direction: column; gap: 24px;">
+            {% csrf_token %}
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                   <div style="display:flex; flex-direction:column; gap:10px;">
+                        <label style="color:#fff; font-weight:600;">RATING</label>
+
+                        <div class="star-rating-edit">
+                            <input type="radio" name="rating" value="5" id="edit-star5">
+                            <label for="edit-star5">★</label>
+
+                            <input type="radio" name="rating" value="4" id="edit-star4">
+                            <label for="edit-star4">★</label>
+
+                            <input type="radio" name="rating" value="3" id="edit-star3">
+                            <label for="edit-star3">★</label>
+
+                            <input type="radio" name="rating" value="2" id="edit-star2">
+                            <label for="edit-star2">★</label>
+
+                            <input type="radio" name="rating" value="1" id="edit-star1">
+                            <label for="edit-star1">★</label>
+                        </div>
+                    </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+<label for="id_comment" style="color: #ffffff; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">YOUR COMMENT</label>                <textarea name="comment" id="id_comment" rows="6" required placeholder="Share your updated thoughts about this movie..."
+                          style="width: 100%; padding: 16px; background: #0f3460; border: 2px solid #253351; border-radius: 10px; color: #ffffff; font-size: 1rem; resize: vertical; line-height: 1.6; outline: none; transition: border-color 0.2s;"
+                          onfocus="this.style.borderColor='#e94560'" 
+                          onblur="this.style.borderColor='#253351'">{{ form.initial.comment }}</textarea>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid #253351; margin: 8px 0;">
+
+            <div>
+                <button type="submit" 
+                        style="width: 100%; padding: 15px; background: #e94560; color: #ffffff; border: none; border-radius: 50px; font-size: 1.05rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(233, 69, 96, 0.3);"
+                        onmouseover="this.style.background='#ff5975'; this.style.boxShadow='0 6px 20px rgba(233, 69, 96, 0.45)'; this.style.transform='translateY(-1px)';" 
+                        onmouseout="this.style.background='#e94560'; this.style.boxShadow='0 4px 12px rgba(233, 69, 96, 0.3)'; this.style.transform='translateY(0)';">
+                     Update Review
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        
+        const existingRating = JSON.parse("{{ form.instance.rating|default_if_none:0 }}");
+        
+        if (existingRating > 0) {
+            const radio = document.querySelector(
+                `.star-rating-edit input[value="${existingRating}"]`
+            );
+            
+            if (radio) {
+                radio.checked = true;
+            }
+        }
+        
+    });
+</script>
+    {% endblock %}

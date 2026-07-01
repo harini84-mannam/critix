@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<style>
+    .profile-section-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #e94560;
+        margin: 0 0 18px;
+    }
+
+    .recent-review-card {
+        display: flex;
+        gap: 14px;
+        background: #16213e;
+        border: 1px solid #222d4a;
+        border-radius: 10px;
+        padding: 14px 16px;
+        text-decoration: none;
+        color: #fff;
+        transition: border-color 0.2s, transform 0.2s;
+        align-items: center;
+    }
+
+    .recent-review-card:hover {
+        border-color: #e94560;
+        transform: translateX(4px);
+    }
+
+    .recent-poster {
+        width: 50px;
+        height: 68px;
+        border-radius: 6px;
+        object-fit: cover;
+        flex-shrink: 0;
+        background: #0f3460;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        overflow: hidden;
+    }
+
+    .recent-poster img { width: 100%; height: 100%; object-fit: cover; }
+
+    .recent-info { flex: 1; }
+    .recent-movie-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; }
+    .recent-rating { color: #ffc107; font-size: 0.82rem; margin-bottom: 4px; }
+    .recent-comment { color: #8892a4; font-size: 0.82rem; line-height: 1.4;
+                      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 380px; }
+    .recent-date { font-size: 0.75rem; color: #555; white-space: nowrap; }
+</style>
+
+<div style="max-width:1200px; margin:0 auto; padding:20px; font-family:'Segoe UI', sans-serif;">
+
+    <!-- Header -->
+    <div style="background:#16213e; padding:25px; border-radius:10px; margin-bottom:30px; border-left:5px solid #e94560;">
+        <h1 style="margin:0; color:#fff;">👤 My Profile Dashboard</h1>
+        <p style="color:#aaa; margin:5px 0 0 0;">Manage your movie reviews and account.</p>
+    </div>
+
+    <!-- Stats -->
+    <div style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:40px;">
+        <div style="flex:1; min-width:250px; background:#16213e; border:1px solid #222d4a; padding:20px; border-radius:10px; display:flex; align-items:center; gap:20px;">
+            <div style="background:rgba(233,69,96,0.1); width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.3rem; color:#e94560;">✍️</div>
+            <div>
+                <div style="font-size:1.6rem; font-weight:700; color:#fff; line-height:1.2;">{{ reviews_count }}</div>
+                <div style="font-size:0.8rem; color:#aaa; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-top:2px;">Reviews Written</div>
+            </div>
+        </div>
+        <div style="flex:1; min-width:250px; background:#16213e; border:1px solid #222d4a; padding:20px; border-radius:10px; display:flex; align-items:center; gap:20px;">
+            <div style="background:rgba(255,193,7,0.1); width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.3rem; color:#ffc107;">⭐</div>
+            <div>
+                <div style="font-size:1.6rem; font-weight:700; color:#fff; line-height:1.2;">
+                    {{ average_rating }}<span style="font-size:0.95rem; color:#aaa; font-weight:400;"> / 5</span>
+                </div>
+                <div style="font-size:0.8rem; color:#aaa; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-top:2px;">Average Rating Given</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recently Reviewed -->
+    {% if recent_reviews %}
+    <div style="margin-bottom:40px;">
+        <h2 class="profile-section-title">🕐 Recently iewed</h2>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            {% for review in recent_reviews %}
+            <a href="{% url 'movie_detail' review.movie.id %}" class="recent-review-card">
+                <div class="recent-poster">
+                    {% if review.movie.poster %}
+                        <img src="{{ review.movie.poster.url }}" alt="{{ review.movie.title }}">
+                    {% else %}
+                        🎬
+                    {% endif %}
+                </div>
+                <div class="recent-info">
+                    <div class="recent-movie-title">{{ review.movie.title }}</div>
+                    <div class="recent-rating">
+                        {% if review.rating >= 5 %}⭐⭐⭐⭐⭐
+                        {% elif review.rating == 4 %}⭐⭐⭐⭐
+                        {% elif review.rating == 3 %}⭐⭐⭐
+                        {% elif review.rating == 2 %}⭐⭐
+                        {% else %}⭐{% endif %}
+                    </div>
+                    <div class="recent-comment">{{ review.comment }}</div>
+                </div>
+                <div class="recent-date">{{ review.created_at|date:"d M Y" }}</div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- All Reviews -->
+    <h2 style="margin-bottom:20px; color:#fff;">✍️ My Reviews ({{ reviews.count }})</h2>
+
+    {% for review in reviews %}
+        <div style="background:#16213e; padding:20px; margin:15px 0; border-radius:10px; border:1px solid #222d4a;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+                <div>
+                    <h3 style="margin:0 0 8px 0; color:#e94560;">
+                        <a href="{% url 'movie_detail' review.movie.id %}" style="color:#e94560; text-decoration:none;">{{ review.movie.title }}</a>
+                    </h3>
+                    <p style="margin:0; font-size:0.95rem;">
+                        Rating:
+                        {% if review.rating >= 5 %}⭐⭐⭐⭐⭐
+                        {% elif review.rating == 4 %}⭐⭐⭐⭐
+                        {% elif review.rating == 3 %}⭐⭐⭐
+                        {% elif review.rating == 2 %}⭐⭐
+                        {% else %}⭐{% endif %}
+                    </p>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <a href="{% url 'edit_review' review.id %}"
+                       style="color:#5b8dee; text-decoration:none; font-size:0.9rem; font-weight:bold; background:rgba(91,141,238,0.1); padding:6px 12px; border-radius:5px; transition:background 0.2s;"
+                       onmouseover="this.style.background='rgba(91,141,238,0.2)'"
+                       onmouseout="this.style.background='rgba(91,141,238,0.1)'">
+                        ✏️ Edit
+                    </a>
+                    <a href="{% url 'delete_review' review.id %}"
+                       style="color:#ff4a4a; text-decoration:none; font-size:0.9rem; font-weight:bold; background:rgba(255,74,74,0.1); padding:6px 12px; border-radius:5px; transition:background 0.2s;"
+                       onmouseover="this.style.background='rgba(255,74,74,0.2)'"
+                       onmouseout="this.style.background='rgba(255,74,74,0.1)'"
+                       onclick="return confirm('Are you sure you want to delete this review?')">
+                        🗑️ Delete
+                    </a>
+                </div>
+            </div>
+            <p style="margin-top:15px; margin-bottom:0; color:#ddd; line-height:1.5; background:#0f3460; padding:12px; border-radius:6px;">
+                {{ review.comment }}
+            </p>
+            <p style="margin-top:8px; font-size:0.78rem; color:#555;">{{ review.created_at|date:"d M Y" }}</p>
+        </div>
+    {% empty %}
+        <p style="color:#aaa; background:#16213e; padding:20px; border-radius:10px; text-align:center;">
+            You haven't left any reviews yet.
+        </p>
+    {% endfor %}
+
+</div>
+
+<!-- ── Change Username Modal ── -->
+<div id="usernameModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65);
+     z-index:5000; align-items:center; justify-content:center;">
+    <div style="background:#16213e; border:1px solid #253351; border-radius:14px; padding:32px;
+                width:400px; max-width:95vw; box-shadow:0 20px 60px rgba(0,0,0,0.5); position:relative;">
+        <button onclick="closeModal('usernameModal')"
+                style="position:absolute; top:14px; right:16px; background:none; border:none;
+                       color:#aaa; font-size:1.3rem; cursor:pointer;">✕</button>
+        <h3 style="margin:0 0 20px; font-size:1.1rem;">✏️ Change Username</h3>
+        <form method="POST" action="{% url 'change_username' %}">
+            {% csrf_token %}
+            {% if username_errors %}
+            <div style="background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3);
+                        color:#f87171; padding:10px 14px; border-radius:8px; margin-bottom:14px; font-size:0.88rem;">
+                {% for e in username_errors %}<div>{{ e }}</div>{% endfor %}
+            </div>
+            {% endif %}
+            <label style="display:block; font-size:0.85rem; color:#8892a4; margin-bottom:6px;">New Username</label>
+            <input type="text" name="new_username" placeholder="Enter new username"
+                   style="width:100%; padding:11px 14px; background:#0f3460; border:1px solid #253351;
+                          border-radius:8px; color:#fff; font-size:0.92rem; outline:none; margin-bottom:16px;"
+                   onfocus="this.style.borderColor='#5b8dee'" onblur="this.style.borderColor='#253351'">
+            <button type="submit"
+                    style="width:100%; padding:12px; background:#e94560; border:none; border-radius:8px;
+                           color:#fff; font-size:0.95rem; font-weight:600; cursor:pointer;">
+                Save Username
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- ── Change Password Modal ── -->
+<div id="passwordModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65);
+     z-index:5000; align-items:center; justify-content:center;">
+    <div style="background:#16213e; border:1px solid #253351; border-radius:14px; padding:32px;
+                width:400px; max-width:95vw; box-shadow:0 20px 60px rgba(0,0,0,0.5); position:relative;">
+        <button onclick="closeModal('passwordModal')"
+                style="position:absolute; top:14px; right:16px; background:none; border:none;
+                       color:#aaa; font-size:1.3rem; cursor:pointer;">✕</button>
+        <h3 style="margin:0 0 20px; font-size:1.1rem;">🔒 Change Password</h3>
+        <form method="POST" action="{% url 'change_password' %}">
+            {% csrf_token %}
+            {% if password_errors %}
+            <div style="background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3);
+                        color:#f87171; padding:10px 14px; border-radius:8px; margin-bottom:14px; font-size:0.88rem;">
+                {% for e in password_errors %}<div>{{ e }}</div>{% endfor %}
+            </div>
+            {% endif %}
+            <label style="display:block; font-size:0.85rem; color:#8892a4; margin-bottom:6px;">Current Password</label>
+            <input type="password" name="current_password" placeholder="Current password"
+                   style="width:100%; padding:11px 14px; background:#0f3460; border:1px solid #253351;
+                          border-radius:8px; color:#fff; font-size:0.92rem; outline:none; margin-bottom:12px;"
+                   onfocus="this.style.borderColor='#5b8dee'" onblur="this.style.borderColor='#253351'">
+            <label style="display:block; font-size:0.85rem; color:#8892a4; margin-bottom:6px;">New Password</label>
+            <input type="password" name="new_password" placeholder="New password (min 8 chars)"
+                   style="width:100%; padding:11px 14px; background:#0f3460; border:1px solid #253351;
+                          border-radius:8px; color:#fff; font-size:0.92rem; outline:none; margin-bottom:12px;"
+                   onfocus="this.style.borderColor='#5b8dee'" onblur="this.style.borderColor='#253351'">
+            <label style="display:block; font-size:0.85rem; color:#8892a4; margin-bottom:6px;">Confirm New Password</label>
+            <input type="password" name="confirm_password" placeholder="Confirm new password"
+                   style="width:100%; padding:11px 14px; background:#0f3460; border:1px solid #253351;
+                          border-radius:8px; color:#fff; font-size:0.92rem; outline:none; margin-bottom:16px;"
+                   onfocus="this.style.borderColor='#5b8dee'" onblur="this.style.borderColor='#253351'">
+            <button type="submit"
+                    style="width:100%; padding:12px; background:#e94560; border:none; border-radius:8px;
+                           color:#fff; font-size:0.95rem; font-weight:600; cursor:pointer;">
+                Save Password
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function openModal(id) {
+    var m = document.getElementById(id);
+    m.style.display = 'flex';
+}
+function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+}
+['usernameModal','passwordModal'].forEach(function(id) {
+    document.getElementById(id).addEventListener('click', function(e) {
+        if (e.target === this) closeModal(id);
+    });
+});
+(function() {
+    var params = new URLSearchParams(window.location.search);
+    var action = params.get('action');
+    if (action === 'change_username') openModal('usernameModal');
+    if (action === 'change_password') openModal('passwordModal');
+
+    // Server-side error flags passed via data attributes (avoids Django tags inside JS)
+    var flags = document.getElementById('modal-flags');
+    if (flags) {
+        if (flags.dataset.username === '1') openModal('usernameModal');
+        if (flags.dataset.password === '1') openModal('passwordModal');
+    }
+}());
+</script>
+
+<span id="modal-flags" style="display:none"
+    data-username="{% if show_username_modal or username_errors %}1{% else %}0{% endif %}"
+    data-password="{% if show_password_modal or password_errors %}1{% else %}0{% endif %}">
+</span>
+
+{% endblock %}

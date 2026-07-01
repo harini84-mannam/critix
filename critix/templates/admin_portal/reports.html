@@ -1,0 +1,97 @@
+{% extends 'admin_portal/base.html' %}
+
+{% block page_title %}Reports{% endblock %}
+{% block breadcrumb %}Moderation / Reports{% endblock %}
+
+{% block content %}
+<h2 style="font-size: 1.4rem; margin-bottom: 24px;">🚩 Review Reports</h2>
+
+<div style="margin-bottom: 40px;">
+    <h3 style="font-size: 1.1rem; margin-bottom: 16px; color: #e94560;">⏳ Pending Reports</h3>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Reporter</th>
+                    <th>Reason</th>
+                    <th>Review By</th>
+                    <th>Movie</th>
+                    <th>Comment</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in pending_reports %}
+                <tr>
+                    <td>{{ report.reporter.username }}</td>
+                    <td><span style="background: rgba(239,68,68,0.15); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">{{ report.reason|upper }}</span></td>
+                    <td>{{ report.review.user.username }}</td>
+                    <td><strong>{{ report.review.movie.title }}</strong></td>
+                    <td>{{ report.review.comment|truncatewords:10 }}</td>
+                    <td>{{ report.created_at|date:"d M Y" }}</td>
+                    <td style="display: flex; gap: 6px;">
+                        <a href="{% url 'admin_report_dismiss' report.id %}" class="btn btn-secondary btn-sm">Dismiss</a>
+                        <a href="{% url 'admin_report_delete_review' report.id %}" class="btn btn-danger btn-sm">Delete</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 40px 16px; color: #8892a4;">✅ All reports resolved!</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div>
+    <h3 style="font-size: 1.1rem; margin-bottom: 16px; color: #22c55e;">✅ Resolved Reports (History)</h3>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Reporter</th>
+                    <th>Reason</th>
+                    <th>Movie</th>
+                    <th>Action Taken</th>
+                    <th>By Admin</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in resolved_reports %}
+                <tr>
+                    <td>{{ report.reporter.username }}</td>
+                    <td><span style="background: rgba(34,197,94,0.15); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">{{ report.reason|upper }}</span></td>
+                    <td><strong>{{ report.review.movie.title }}</strong></td>
+                    <td>
+                        {% with latest_action=report.actions.first %}
+                        {% if latest_action.action == 'dismissed' %}
+                            <span style="color: #5b8dee;">🔹 Dismissed</span>
+                        {% elif latest_action.action == 'review_deleted' %}
+                            <span style="color: #ef4444;">🗑️ Review Deleted</span>
+                        {% endif %}
+                        {% endwith %}
+                    </td>
+                    <td>
+                        {% with latest_action=report.actions.first %}
+                        {{ latest_action.admin_user.username }}
+                        {% endwith %}
+                    </td>
+                    <td>
+                        {% with latest_action=report.actions.first %}
+                        {{ latest_action.created_at|date:"d M Y" }}
+                        {% endwith %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 40px 16px; color: #8892a4;">No resolved reports yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

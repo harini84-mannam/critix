@@ -1,0 +1,289 @@
+{% extends 'admin_portal/base.html' %}
+
+{% block page_title %}{{ verbose_name_pl }}{% endblock %}
+{% block breadcrumb %}Admin / {{ verbose_name_pl }}{% endblock %}
+
+{% block content %}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; gap:12px; flex-wrap:wrap;">
+    <div>
+        <h2 style="font-size:1.4rem; margin-bottom:4px;">{{ verbose_name_pl }}</h2>
+        <span style="font-size:0.85rem; color:#8892a4;">
+            {% if showing_capped %}
+                Showing 300 of {{ total_count }} records
+            {% else %}
+                {{ total_count }} record{{ total_count|pluralize }}
+            {% endif %}
+        </span>
+    </div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <a href="{% url 'admin_model_import' model_name %}" class="btn btn-secondary">
+            📥 Import
+        </a>
+
+        <div style="position:relative; display:inline-block;">
+            <button onclick="document.getElementById('exportMenu').classList.toggle('open')"
+                    class="btn btn-secondary" style="display:flex; align-items:center; gap:6px;">
+                📤 Export <span style="font-size:.7rem;">▼</span>
+            </button>
+            <div id="exportMenu" style="display:none; position:absolute; right:0; top:110%;
+                 background:#16213e; border:1px solid #253351; border-radius:8px;
+                 min-width:160px; z-index:100; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.4);">
+                <a href="{% url 'admin_model_export' model_name %}?fmt=csv{% if query %}&q={{ query }}{% endif %}"
+                   style="display:block; padding:11px 16px; color:#d0d7e3; text-decoration:none; font-size:.9rem;"
+                   onmouseover="this.style.background='#253351'" onmouseout="this.style.background=''">
+                    📄 Export as CSV
+                </a>
+                <a href="{% url 'admin_model_export' model_name %}?fmt=xlsx{% if query %}&q={{ query }}{% endif %}"
+                   style="display:block; padding:11px 16px; color:#d0d7e3; text-decoration:none; font-size:.9rem; border-top:1px solid #253351;"
+                   onmouseover="this.style.background='#253351'" onmouseout="this.style.background=''">
+                    📊 Export as Excel
+                </a>
+            </div>
+        </div>
+
+        {% if can_add %}
+        <a href="{% url 'admin_model_add' model_name %}" class="btn btn-primary">
+            ➕ Add {{ verbose_name }}
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+
+{% if has_search or filter_options %}
+<form method="GET" id="filterForm"
+style="background:#16213e; border:1px solid #253351; border-radius:10px;
+             padding:16px 20px; margin-bottom:20px;
+             display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end;">
+
+{% if has_search %}
+    <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:200px;">
+        <label style="font-size:0.75rem; color:#8892a4; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">
+            Search
+        </label>
+        <div style="position:relative;">
+            <span style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:#8892a4; font-size:0.9rem;">🔍</span>
+            <input type="text" name="q" value="{{ query }}"
+            placeholder="Search {{ verbose_name_pl|lower }}…"
+                   class="form-input" style="padding-left:34px;">
+        </div>
+    </div>
+    {% endif %}
+
+    {% for f in filter_options %}
+    <div style="display:flex; flex-direction:column; gap:4px; min-width:160px;">
+        <label style="font-size:0.75rem; color:#8892a4; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">
+            {{ f.label }}
+        </label>
+        <select name="{{ f.name }}" onchange="this.form.submit()" class="form-input" style="padding:10px 12px;">
+            <option value="">All {{ f.label }}</option>
+            {% for choice in f.choices %}
+            <option value="{{ choice.value }}"
+            {% if f.selected == choice.value|stringformat:"s" %}selected{% endif %}>
+                {{ choice.display }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    {% endfor %}
+
+    <div style="display:flex; gap:8px; align-self:flex-end;">
+        <button type="submit" class="btn btn-secondary" style="white-space:nowrap;">Apply</button>
+        {% if query or active_filters %}
+        <a href="{% url 'admin_model_list' model_name %}" class="btn btn-sm"
+        style="background:#253351; color:#d0d7e3; white-space:nowrap; padding:10px 14px;">
+            ✕ Clear
+        </a>
+        {% endif %}
+    </div>
+
+    {% if sort_field %}<input type="hidden" name="sort" value="{{ sort_field }}">{% endif %}
+    {% if sort_dir %}<input type="hidden" name="dir"  value="{{ sort_dir }}">{% endif %}
+</form>
+{% endif %}
+
+{% if actions %}
+<form method="POST" action="{% url 'admin_model_action' model_name %}" id="actionForm"
+style="margin-bottom:12px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+{% csrf_token %}
+<input type="hidden" name="selected_ids" id="selectedIdsInput" value="">
+
+<select name="action" class="form-input" style="width:auto; min-width:260px; padding:8px 12px;">
+        <option value="">------------------</option>
+        {% for action in actions %}
+        <option value="{{ action.name }}" data-confirm="{{ action.confirm|yesno:'true,false' }}">
+            {{ action.label }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <button type="button" onclick="submitAction()" class="btn btn-secondary">
+        ▶ Go
+    </button>
+
+    <span id="selectionCount" style="color:#8892a4; font-size:0.85rem; display:none;">
+        0 selected
+    </span>
+</form>
+{% endif %}
+
+{% if showing_capped %}
+<div style="background:rgba(255,193,7,0.1); border:1px solid rgba(255,193,7,0.3);
+            color:#ffc107; padding:10px 16px; border-radius:8px; margin-bottom:16px;
+            font-size:0.875rem;">
+    ⚠️  Showing the 300 most recent rows of {{ total_count }} total.
+</div>
+{% endif %}
+
+<div class="table-container" style="overflow-x:auto;">
+    <table style="min-width:600px;">
+        <thead>
+            <tr>
+                {% if actions %}
+                <th style="width:40px; text-align:center;">
+                    <input type="checkbox" id="selectAll" title="Select all"
+                    style="accent-color:#e94560; cursor:pointer;"
+                    onchange="toggleAll(this)">
+                </th>
+                {% endif %}
+
+                {% for col in columns %}
+                <th>
+                    <a href="?{% if query %}q={{ query }}&{% endif %}{% for f in filter_options %}{% if f.selected %}{{ f.name }}={{ f.selected }}&{% endif %}{% endfor %}sort={{ col.name }}&dir={% if sort_field == col.name and sort_dir == 'asc' %}desc{% else %}asc{% endif %}"
+                    style="color:inherit; text-decoration:none; display:flex; align-items:center; gap:6px;">
+                        {{ col.label }}
+                        {% if sort_field == col.name %}
+                            {% if sort_dir == 'asc' %}↑{% else %}↓{% endif %}
+                        {% else %}
+                            <span style="color:#4a556a;">⇅</span>
+                        {% endif %}
+                    </a>
+                </th>
+                {% endfor %}
+
+                <th style="text-align:right;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr class="data-row">
+                {% if actions %}
+                <td style="text-align:center;">
+                    <input type="checkbox" class="row-check" value="{{ row.pk }}"
+                           style="accent-color:#e94560; cursor:pointer;"
+                           onchange="updateSelection()">
+                </td>
+                {% endif %}
+                {% for cell in row.cells %}
+                <td>
+                    {% if cell == "✓" %}
+                    <span style="color:#22c55e; font-size:1rem;">✓</span>
+                    {% elif cell == "✗" %}
+                    <span style="color:#ef4444; font-size:1rem;">✗</span>
+                    {% else %}
+                    <span title="{{ cell }}">
+                        {% if cell|length > 80 %}{{ cell|slice:":80" }}…{% else %}{{ cell }}{% endif %}
+                    </span>
+                    {% endif %}
+                </td>
+                {% endfor %}
+
+                <td style="text-align:right; white-space:nowrap;">
+                    <a href="{% url 'admin_model_edit' model_name row.pk %}"
+                    class="btn btn-secondary btn-sm">✏️ Edit</a>
+                    <a href="{% url 'admin_model_delete' model_name row.pk %}"
+                       class="btn btn-danger btn-sm" style="margin-left:6px;">🗑 Delete</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="{{ columns|length|add:2 }}"
+                style="text-align:center; padding:48px 16px; color:#8892a4;">
+                    {% if query or active_filters %}
+                    No {{ verbose_name_pl|lower }} match your current search / filters.
+                    <br><a href="{% url 'admin_model_list' model_name %}"
+                    style="color:#5b8dee; text-decoration:none; margin-top:8px; display:inline-block;">
+                        Clear filters →
+                    </a>
+                    {% else %}
+                    No {{ verbose_name_pl|lower }} yet.
+                    {% if can_add %}
+                    <br><a href="{% url 'admin_model_add' model_name %}"
+                    style="color:#5b8dee; text-decoration:none; margin-top:8px; display:inline-block;">
+                        Add the first one →
+                    </a>
+                    {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if actions %}
+<script>
+    document.addEventListener('click', function(e) {
+        const menu = document.getElementById('exportMenu');
+        if (menu && !e.target.closest('#exportMenu') && !e.target.closest('button[onclick*="exportMenu"]')) {
+            menu.style.display = 'none';
+            menu.classList.remove('open');
+        }
+    });
+    document.getElementById('exportMenu') && document.getElementById('exportMenu').addEventListener('classChange', function() {
+        this.style.display = this.classList.contains('open') ? 'block' : 'none';
+    });
+    const _exportBtn = document.querySelector('button[onclick*="exportMenu"]');
+    if (_exportBtn) {
+        _exportBtn.onclick = function() {
+            const m = document.getElementById('exportMenu');
+            m.style.display = m.style.display === 'block' ? 'none' : 'block';
+        };
+    }
+
+function toggleAll(master) {
+    document.querySelectorAll('.row-check').forEach(cb => cb.checked = master.checked);
+    updateSelection();
+}
+
+function updateSelection() {
+    const checked = document.querySelectorAll('.row-check:checked');
+    const countEl = document.getElementById('selectionCount');
+    const master  = document.getElementById('selectAll');
+
+    countEl.style.display = checked.length ? 'inline' : 'none';
+    countEl.textContent   = `${checked.length} selected`;
+
+    const total = document.querySelectorAll('.row-check').length;
+    master.indeterminate = checked.length > 0 && checked.length < total;
+    master.checked       = checked.length === total && total > 0;
+}
+
+function submitAction() {
+    const actionSel  = document.querySelector('select[name="action"]');
+    const actionName = actionSel.value;
+    if (!actionName) { alert('Please select an action first.'); return; }
+
+    const selected = Array.from(document.querySelectorAll('.row-check:checked')).map(cb => cb.value);
+    if (selected.length === 0) { alert('Please select at least one row.'); return; }
+
+    // Route delete actions to the confirmation page
+    if (actionName.toLowerCase().includes('delete')) {
+        const ids = selected.join(',');
+        window.location.href = "{% url 'admin_bulk_delete_confirm' model_name %}?selected_ids=" + encodeURIComponent(ids);
+        return;
+    }
+
+    const needsConfirm = actionSel.selectedOptions[0].dataset.confirm === 'true';
+    if (needsConfirm) {
+        if (!confirm(`Apply "${actionSel.selectedOptions[0].text}" to ${selected.length} item(s)?`)) return;
+    }
+
+    document.getElementById('selectedIdsInput').value = selected.join(',');
+    document.getElementById('actionForm').submit();
+}
+</script>
+{% endif %}
+
+{% endblock %}
