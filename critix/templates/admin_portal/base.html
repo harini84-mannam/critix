@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin | Critix{% endblock %}</title>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { primary: '#e94560', secondary: '#5b8dee', surface: '#1e293b' }
+                    }
+                }
+            }
+        }
+    </script>
+    <script>
+        (function () {
+            if (localStorage.getItem('critix-theme') === 'light') {
+                document.documentElement.classList.add('theme-light');
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        /* Standard CSS to avoid IDE warnings while still supporting custom classes */
+        .glass {
+            background-color: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(30, 41, 59, 1);
+        }
+        .btn-premium {
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+        .btn-premium:active { transform: scale(0.95); }
+        .btn-primary {
+            background-color: #e94560;
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(233, 69, 96, 0.2);
+        }
+        .btn-primary:hover { background-color: #f43f5e; }
+        .btn-secondary {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            border: 1px solid #334155;
+        }
+        .btn-secondary:hover { background-color: #334155; }
+        
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            color: #94a3b8;
+            transition: all 0.2s;
+        }
+        .sidebar-link:hover {
+            color: white;
+            background-color: rgba(30, 41, 59, 0.5);
+        }
+        .sidebar-link.active {
+            background-color: rgba(233, 69, 96, 0.1);
+            color: #e94560;
+            border: 1px solid rgba(233, 69, 96, 0.2);
+        }
+
+        /* Custom Scrollbar for Premium Feel */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(51, 65, 85, 0.5);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(71, 85, 105, 0.8);
+        }
+
+        html.theme-light body { background: #f8fafc; color: #0f172a; }
+        html.theme-light .glass { background-color: rgba(255,255,255,0.88); border-color: #e2e8f0; }
+        html.theme-light [class*="text-white"] { color: #0f172a !important; }
+        html.theme-light [class*="text-slate-200"] { color: #334155 !important; }
+        html.theme-light [class*="text-slate-300"] { color: #475569 !important; }
+        html.theme-light [class*="text-slate-400"] { color: #64748b !important; }
+        html.theme-light [class*="text-slate-500"], html.theme-light [class*="text-slate-600"] { color: #64748b !important; }
+        html.theme-light [class*="bg-slate-950"] { background-color: #f1f5f9 !important; }
+        html.theme-light [class*="bg-slate-900"] { background-color: #ffffff !important; }
+        html.theme-light [class*="bg-slate-800"] { background-color: #e2e8f0 !important; }
+        html.theme-light [class*="border-slate-800"] { border-color: #e2e8f0 !important; }
+        html.theme-light .btn-secondary { background-color: #ffffff; color: #334155; border-color: #cbd5e1; }
+        html.theme-light .btn-secondary:hover { background-color: #f1f5f9; }
+        html.theme-light .theme-toggle { background: #ffffff; border-color: #e2e8f0; color: #475569; }
+        html.theme-light .theme-toggle .theme-sun { display: none; }
+        html.theme-light .theme-toggle .theme-moon { display: block; }
+        .theme-toggle .theme-moon { display: none; }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-slate-950 text-slate-200 antialiased h-screen flex overflow-hidden">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="w-72 glass border-r border-slate-800/50 flex flex-col shrink-0 h-full overflow-hidden">
+        <div class="p-8 shrink-0">
+            <a href="/" class="text-2xl font-black bg-gradient-to-r from-brand-primary to-rose-400 bg-clip-text text-transparent flex items-center gap-2">
+                <i data-lucide="clapperboard" class="text-brand-primary"></i>
+                Critix Admin
+            </a>
+        </div>
+
+        <nav class="flex-1 px-4 space-y-8 overflow-y-auto pb-8">
+            <!-- Main Nav -->
+            <div class="space-y-2">
+                <p class="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">Overview</p>
+                <a href="{% url 'admin_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                    Dashboard
+                </a>
+            </div>
+
+            <!-- Dynamic Apps -->
+            <div class="space-y-4">
+                <p class="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Management</p>
+                {% for app in apps_overview %}
+                <div class="space-y-1">
+                    <button onclick="document.getElementById('app-{{ app.app_label }}').classList.toggle('hidden')" 
+                            class="w-full flex items-start justify-between px-4 py-2 text-sm font-bold text-slate-300 hover:text-white transition-colors text-left group">
+                        <span class="pr-2">{{ app.app_name }}</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-600 shrink-0 mt-0.5 group-hover:text-white transition-colors"></i>
+                    </button>
+                    <div id="app-{{ app.app_label }}" class="space-y-1 pl-4">
+                        {% for m in app.models %}
+                        <a href="{{ m.list_url }}" class="flex items-center justify-between px-4 py-2 text-xs rounded-lg text-slate-500 hover:text-brand-primary hover:bg-brand-primary/5 transition-all {% if request.resolver_match.kwargs.model_name == m.model_name %}text-brand-primary bg-brand-primary/5 font-bold{% endif %}">
+                            <span>{{ m.label }}</span>
+                            <span class="bg-slate-800 px-1.5 py-0.5 rounded-md text-[10px]">{{ m.count }}</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="p-6 border-t border-slate-800/50 space-y-4 shrink-0">
+            <div class="flex items-center gap-3 px-2">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-primary to-rose-500 flex items-center justify-center text-white font-bold">
+                    {{ user.username.0|upper }}
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm font-bold text-white truncate">{{ user.username }}</p>
+                    <p class="text-[10px] text-slate-500 truncate">Administrator</p>
+                </div>
+            </div>
+            <a href="{% url 'logout' %}" class="btn-premium bg-rose-500/10 text-rose-500 border border-rose-500/20 w-full justify-center">
+                <i data-lucide="log-out" class="w-4 h-4"></i>
+                Logout
+            </a>
+        </div>
+    </aside>
+
+    <!-- ── MAIN CONTENT ── -->
+    <main class="flex-1 flex flex-col overflow-hidden h-full">
+        <!-- Header -->
+        <header class="h-20 glass border-b border-slate-800/50 px-8 flex items-center justify-between shrink-0">
+            <div>
+                <h1 class="text-xl font-black text-white">{% block page_title %}Admin Portal{% endblock %}</h1>
+                <div class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">
+                    {% block breadcrumb %}Home / Dashboard{% endblock %}
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <button type="button" onclick="toggleAdminTheme()" class="theme-toggle btn-premium btn-secondary" aria-label="Switch to light mode" title="Switch theme">
+                    <i data-lucide="sun" class="theme-sun w-4 h-4"></i>
+                    <i data-lucide="moon" class="theme-moon w-4 h-4"></i>
+                </button>
+                <a href="/" class="btn-premium btn-secondary">
+                    <i data-lucide="external-link" class="w-4 h-4"></i>
+                    View Site
+                </a>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div class="flex-1 overflow-y-auto p-8">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <script>
+        function toggleAdminTheme() {
+            const isLight = document.documentElement.classList.toggle('theme-light');
+            document.documentElement.classList.toggle('dark', !isLight);
+            localStorage.setItem('critix-theme', isLight ? 'light' : 'dark');
+            const button = document.querySelector('.theme-toggle');
+            if (button) button.setAttribute('aria-label', isLight ? 'Switch to dark mode' : 'Switch to light mode');
+        }
+        lucide.createIcons();
+    </script>
+</body>
+</html>

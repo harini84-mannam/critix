@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Review | Critix{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-8">
+    
+    <!-- ── BACK BUTTON ── -->
+    <a href="{% url 'movie_detail' movie.id %}" class="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors group">
+        <i data-lucide="arrow-left" class="w-5 h-5 group-hover:-translate-x-1 transition-transform"></i>
+        Back to {{ movie.title }}
+    </a>
+
+    <!-- ── EDIT FORM ── -->
+    <div class="glass p-8 md:p-12 rounded-[3rem] space-y-8 relative overflow-hidden border-slate-800/50">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-brand-primary/10 blur-[80px] rounded-full -z-10"></div>
+        
+        <div class="space-y-2">
+            <h2 class="text-3xl font-black text-white">Edit Your Review</h2>
+            <p class="text-slate-400">Refine your thoughts for <span class="text-brand-primary font-bold">{{ movie.title }}</span>.</p>
+        </div>
+
+        <form method="POST" class="space-y-8">
+            {% csrf_token %}
+            
+            <!-- Rating -->
+            <div class="space-y-4">
+                <label class="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Your Rating</label>
+                <div class="flex flex-row-reverse justify-end gap-2 star-rating">
+                    {% for i in "54321"|make_list %}
+                    <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" class="hidden peer" required>
+                    <label for="star{{ i }}" class="cursor-pointer text-slate-700 hover:text-yellow-500 peer-checked:text-yellow-500 peer-hover:text-yellow-500 transition-all">
+                        <i data-lucide="star" class="w-10 h-10 fill-current"></i>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Comment -->
+            <div class="space-y-4">
+                <label for="id_comment" class="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Your Thoughts</label>
+                <textarea name="comment" id="id_comment" rows="8"
+                          class="w-full bg-slate-950 border border-slate-800 rounded-3xl p-6 text-white focus:ring-2 focus:ring-brand-primary/30 outline-none transition-all leading-relaxed"
+                          placeholder="What did you think of the movie?">{{ form.initial.comment }}</textarea>
+            </div>
+
+            <label class="flex items-center gap-3 text-sm text-slate-400 cursor-pointer select-none">
+                <input type="checkbox" name="contains_spoiler" value="on" {% if form.instance.contains_spoiler %}checked{% endif %} class="w-4 h-4 rounded border-slate-700 bg-slate-950 accent-brand-primary">
+                This review contains spoilers (it will be blurred for others)
+            </label>
+
+            <div class="pt-4 flex flex-col sm:flex-row gap-4">
+                <button type="submit" class="flex-1 btn-premium btn-primary justify-center py-4">
+                    Update Review
+                </button>
+                <a href="{% url 'movie_detail' movie.id %}" class="flex-1 btn-premium btn-secondary justify-center py-4">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Data elements to safely pass Django variables to JS -->
+<div id="rating-data" data-existing-rating="{{ form.instance.rating|default_if_none:0 }}" class="hidden"></div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const ratingData = document.getElementById('rating-data');
+        if (!ratingData) return;
+
+        const existingRating = ratingData.getAttribute('data-existing-rating');
+        if (existingRating && existingRating !== '0') {
+            const radio = document.querySelector(`.star-rating input[value="${existingRating}"]`);
+            if (radio) radio.checked = true;
+        }
+    });
+</script>
+{% endblock %}

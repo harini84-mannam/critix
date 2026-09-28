@@ -1,0 +1,333 @@
+{% extends 'admin_portal/base.html' %}
+
+{% block page_title %}{{ verbose_name_pl }}{% endblock %}
+{% block breadcrumb %}Admin / {{ verbose_name_pl }}{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    
+    <!-- ── TOP BAR ── -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div>
+        <h2 class="text-3xl font-black text-white">
+            {{ verbose_name_pl }}
+        </h2>
+
+        <p class="text-sm text-slate-500 font-bold uppercase tracking-widest mt-1">
+            {% if showing_capped %}
+                Showing 300 of {{ total_count }} records
+            {% else %}
+                {{ total_count }} total record{{ total_count|pluralize }}
+            {% endif %}
+        </p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3">
+        <a href="{% url 'admin_model_import' model_name %}"
+           class="btn-premium btn-secondary">
+            <i data-lucide="upload" class="w-4 h-4"></i>
+            Import
+        </a>
+
+        <div class="relative group">
+            <button type="button"
+                    id="exportToggle"
+                    class="btn-premium btn-secondary"
+                    aria-expanded="false"
+                    aria-controls="exportMenu">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                Export
+                <i data-lucide="chevron-down" class="w-3 h-3 ml-1"></i>
+            </button>
+
+            <div id="exportMenu"
+                 class="absolute right-0 top-full mt-2 w-48 glass rounded-2xl overflow-hidden hidden z-50 animate-slide-up">
+
+                <a href="{% url 'admin_model_export' model_name %}?fmt=csv{% if query %}&q={{ query }}{% endif %}"
+                   class="block px-6 py-3 text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
+                    CSV Format
+                </a>
+
+                <a href="{% url 'admin_model_export' model_name %}?fmt=xlsx{% if query %}&q={{ query }}{% endif %}"
+                   class="block px-6 py-3 text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition-all border-t border-slate-800">
+                    Excel Format
+                </a>
+            </div>
+        </div>
+
+        {% if can_add %}
+            <a href="{% url 'admin_model_add' model_name %}"
+               class="btn-premium btn-primary">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                Add {{ verbose_name }}
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+    <!-- ── FILTERS & SEARCH ── -->
+    {% if has_search or filter_options %}
+    <div class="glass p-6 rounded-[2rem] border-slate-800/50">
+        <form method="GET" id="filterForm" class="flex flex-wrap items-end gap-6">
+            {% if has_search %}
+            <div class="flex-1 min-w-[280px] space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Search</label>
+                <div class="relative group">
+                    <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-brand-primary transition-colors"></i>
+                    <input type="text" name="q" value="{{ query }}" placeholder="Search {{ verbose_name_pl|lower }}..."
+                           class="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 pl-11 pr-4 text-sm text-white focus:ring-2 focus:ring-brand-primary/30 outline-none transition-all">
+                </div>
+            </div>
+            {% endif %}
+
+            {% for f in filter_options %}
+            <div class="w-48 space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">{{ f.label }}</label>
+                <select name="{{ f.name }}" onchange="this.form.submit()" 
+                        class="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 px-4 text-sm text-white focus:ring-2 focus:ring-brand-primary/30 outline-none transition-all appearance-none">
+                    <option value="">All {{ f.label }}</option>
+                    {% for choice in f.choices %}
+                    <option value="{{ choice.value }}" {% if f.selected == choice.value|stringformat:"s" %}selected{% endif %}>
+                        {{ choice.display }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endfor %}
+
+            <div class="w-48 space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Sort By</label>
+                <select name="sort_by" onchange="this.form.submit()" 
+                        class="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 px-4 text-sm text-white focus:ring-2 focus:ring-brand-primary/30 outline-none transition-all appearance-none">
+                    <option value="" {% if not sort_field %}selected{% endif %}>Default</option>
+                    <option value="title_asc" {% if sort_field == 'title' and sort_dir == 'asc' %}selected{% endif %}>A → Z</option>
+                    <option value="title_desc" {% if sort_field == 'title' and sort_dir == 'desc' %}selected{% endif %}>Z → A</option>
+                    <option value="release_year_desc" {% if sort_field == 'release_year' and sort_dir == 'desc' %}selected{% endif %}>Newest First</option>
+                    <option value="release_year_asc" {% if sort_field == 'release_year' and sort_dir == 'asc' %}selected{% endif %}>Oldest First</option>
+                </select>
+            </div>
+
+            <div class="flex items-center gap-2 pb-0.5">
+                <button type="submit" class="btn-premium btn-primary py-2.5 px-6">Apply</button>
+                {% if query or active_filters or sort_field %}
+                <a href="{% url 'admin_model_list' model_name %}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-800 text-slate-400 hover:text-white transition-all">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                </a>
+                {% endif %}
+            </div>
+            
+            {% if sort_field %}<input type="hidden" name="sort" value="{{ sort_field }}">{% endif %}
+            {% if sort_dir %}<input type="hidden" name="dir" value="{{ sort_dir }}">{% endif %}
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- ── BULK ACTIONS ── -->
+    {% if actions %}
+    <div class="flex items-center gap-4 px-2">
+        <form method="POST" action="{% url 'admin_model_action' model_name %}" id="actionForm" class="flex items-center gap-3">
+            {% csrf_token %}
+            <input type="hidden" name="selected_ids" id="selectedIdsInput" value="">
+            <select name="action" class="bg-slate-900 border border-slate-800 rounded-lg py-1.5 px-3 text-xs text-slate-300 outline-none focus:ring-1 focus:ring-brand-primary/50">
+                <option value="">Bulk Actions</option>
+                {% for action in actions %}
+                <option value="{{ action.name }}" data-confirm="{{ action.confirm|yesno:'true,false' }}">{{ action.label }}</option>
+                {% endfor %}
+            </select>
+            <button type="button" onclick="submitAction()" class="text-xs font-bold text-brand-primary hover:underline">Execute</button>
+        </form>
+        <span id="selectionCount" class="hidden text-[10px] font-bold text-slate-600 uppercase tracking-widest bg-slate-900 px-2 py-1 rounded-md">
+            0 selected
+        </span>
+    </div>
+    {% endif %}
+
+    <!-- ── DATA TABLE ── -->
+    <div class="glass rounded-[2.5rem] overflow-hidden border-slate-800/50">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-900/50 border-b border-slate-800">
+                        {% if actions %}
+                        <th class="w-12 px-6 py-4 text-center">
+                            <input type="checkbox" id="selectAll" onchange="toggleAll(this)" class="w-4 h-4 accent-brand-primary cursor-pointer">
+                        </th>
+                        {% endif %}
+                        
+                        {% for col in columns %}
+                        <th class="px-6 py-4">
+                            <a href="?{% if query %}q={{ query }}&{% endif %}{% for f in filter_options %}{% if f.selected %}{{ f.name }}={{ f.selected }}&{% endif %}{% endfor %}sort={{ col.name }}&dir={% if sort_field == col.name and sort_dir == 'asc' %}desc{% else %}asc{% endif %}"
+                               class="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-brand-primary transition-colors">
+                                {{ col.label }}
+                                {% if sort_field == col.name %}
+                                    <i data-lucide="{% if sort_dir == 'asc' %}chevron-up{% else %}chevron-down{% endif %}" class="w-3 h-3 text-brand-primary"></i>
+                                {% else %}
+                                    <i data-lucide="chevrons-up-down" class="w-3 h-3 text-slate-700"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        {% endfor %}
+                        <th class="px-6 py-4 text-right text-[10px] font-black text-slate-500 uppercase tracking-widest">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    <tr class="border-b border-slate-800/30 hover:bg-slate-800/20 transition-colors group">
+                        {% if actions %}
+                        <td class="px-6 py-4 text-center">
+                            <input type="checkbox" class="row-check w-4 h-4 accent-brand-primary cursor-pointer" value="{{ row.pk }}" onchange="updateSelection()">
+                        </td>
+                        {% endif %}
+                        
+                        {% for cell in row.cells %}
+                        <td class="px-6 py-4">
+                            {% if cell == "✓" %}
+                                <span class="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center"><i data-lucide="check" class="w-3 h-3"></i></span>
+                            {% elif cell == "✗" %}
+                                <span class="w-5 h-5 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center"><i data-lucide="x" class="w-3 h-3"></i></span>
+                            {% else %}
+                                <span class="text-sm font-medium text-slate-300 truncate max-w-[200px] block" title="{{ cell }}">{{ cell }}</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <a href="{% url 'admin_model_edit' model_name row.pk %}" class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 transition-all">
+                                    <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+                                </a>
+                                <form method="POST" action="{% url 'admin_model_delete' model_name row.pk %}" class="inline" onsubmit="return confirm('Delete this record?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-all">
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="100" class="px-6 py-24 text-center space-y-4">
+                            <div class="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center mx-auto text-slate-700">
+                                <i data-lucide="database-zap" class="w-8 h-8"></i>
+                            </div>
+                            <div class="space-y-1">
+                                <h4 class="text-xl font-bold text-white">No records found</h4>
+                                <p class="text-sm text-slate-500">Try adjusting your search or filters.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleAll(source) {
+        const checkboxes = document.querySelectorAll('.row-check');
+        checkboxes.forEach(cb => cb.checked = source.checked);
+        updateSelection();
+    }
+
+    function updateSelection() {
+        const checkboxes = document.querySelectorAll('.row-check:checked');
+        const ids = Array.from(checkboxes).map(cb => cb.value);
+        document.getElementById('selectedIdsInput').value = ids.join(',');
+        
+        const countSpan = document.getElementById('selectionCount');
+        countSpan.textContent = `${ids.length} selected`;
+        countSpan.classList.toggle('hidden', ids.length === 0);
+    }
+
+    function submitAction() {
+        const form = document.getElementById('actionForm');
+        const select = form.querySelector('select[name="action"]');
+        if (!select.value) return;
+        
+        const ids = document.getElementById('selectedIdsInput').value;
+        if (!ids) {
+            alert('Please select at least one record.');
+            return;
+        }
+
+        const option = select.options[select.selectedIndex];
+        if (option.dataset.confirm === 'true') {
+            if (!confirm(`Are you sure you want to perform "${option.text}" on ${ids.split(',').length} records?`)) {
+                return;
+            }
+        }
+
+        form.submit();
+    }
+
+    /*
+     * Export dropdown
+     * This only controls the existing Export UI.
+     */
+    document.addEventListener('DOMContentLoaded', function () {
+        const exportButton = Array.from(
+            document.querySelectorAll('.group > button')
+        ).find(button =>
+            button.textContent.trim().toLowerCase().includes('export')
+        );
+
+        if (!exportButton) return;
+
+        const exportContainer = exportButton.closest('.group');
+        const exportMenu = exportContainer.querySelector('.absolute');
+
+        if (!exportMenu) return;
+
+        exportButton.type = 'button';
+        exportButton.setAttribute('aria-expanded', 'false');
+        exportButton.setAttribute('aria-haspopup', 'true');
+
+        function openExportMenu() {
+            exportMenu.classList.remove('hidden');
+            exportMenu.classList.add('block');
+            exportButton.setAttribute('aria-expanded', 'true');
+        }
+
+        function closeExportMenu() {
+            exportMenu.classList.add('hidden');
+            exportMenu.classList.remove('block');
+            exportButton.setAttribute('aria-expanded', 'false');
+        }
+
+        exportButton.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const isOpen = !exportMenu.classList.contains('hidden');
+
+            if (isOpen) {
+                closeExportMenu();
+            } else {
+                openExportMenu();
+            }
+        });
+
+        // Prevent clicks inside the menu from closing it before the link works
+        exportMenu.addEventListener('click', function (event) {
+            event.stopPropagation();
+        });
+
+        // Close when clicking outside the Export control
+        document.addEventListener('click', function (event) {
+            if (!exportContainer.contains(event.target)) {
+                closeExportMenu();
+            }
+        });
+
+        // Close with Escape
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeExportMenu();
+            }
+        });
+    });
+</script>
+
+{% endblock %}

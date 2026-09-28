@@ -1,0 +1,67 @@
+{% extends 'admin_portal/base.html' %}
+
+{% block page_title %}{{ verbose_name }}{% endblock %}
+{% block breadcrumb %}Critix / {{ verbose_name }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h2 style="font-size: 1.4rem;">🗄️ {{ verbose_name }} ({{ total_count }})</h2>
+    <a href="{% url 'admin_model_add' model_name %}" class="btn btn-primary">➕ Add {{ verbose_name }}</a>
+</div>
+
+{% if filter_options %}
+<form method="GET" style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px; align-items:center;">
+    {% for f in filter_options %}
+    <div style="display:flex; flex-direction:column; gap:4px;">
+        <label style="font-size:0.75rem; color:#8892a4;">{{ f.label }}</label>
+        <select name="{{ f.name }}" onchange="this.form.submit()" class="form-input" style="min-width:160px;">
+            <option value="">All</option>
+            {% for choice in f.choices %}
+            <option value="{{ choice }}" {% if f.selected == choice|stringformat:"s" %}selected{% endif %}>{{ choice }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    {% endfor %}
+    {% if request.GET %}
+    <a href="{% url 'admin_model_detail' model_name %}" class="btn btn-secondary btn-sm" style="align-self:flex-end;">Clear filters</a>
+    {% endif %}
+</form>
+{% endif %}
+
+{% if showing_capped %}
+<p style="color: #ffc107; margin-bottom: 16px;">Showing the most recent 300 of {{ total_count }} rows.</p>
+{% endif %}
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                {% for label in field_labels %}
+                <th>{{ label }}</th>
+                {% endfor %}
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                {% for value in row.values %}
+                <td>{{ value|default:"—" }}</td>
+                {% endfor %}
+                <td style="display:flex; gap:8px;">
+                    <a href="{% url 'admin_model_edit' model_name row.pk %}" class="btn btn-secondary btn-sm">Edit</a>
+                    <form method="POST" action="{% url 'admin_model_delete' model_name row.pk %}" style="display:inline;" onsubmit="return confirm('Delete this row?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="20" style="text-align: center; padding: 40px 16px; color: #8892a4;">No rows yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

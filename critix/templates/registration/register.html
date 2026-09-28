@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account | Critix</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { primary: '#e94560', accent: '#f43f5e' }
+                    }
+                }
+            }
+        }
+    </script>
+    <script>
+        (function () {
+            if (localStorage.getItem('critix-theme') === 'light') {
+                document.documentElement.classList.add('theme-light');
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
+    <style>
+        html.theme-light body { background: #f8fafc; color: #0f172a; }
+        html.theme-light .auth-card { background: rgba(255,255,255,0.88); border-color: #e2e8f0; box-shadow: 0 24px 70px rgba(15,23,42,0.10); }
+        html.theme-light .auth-title { color: #0f172a !important; }
+        html.theme-light .auth-input { background: #ffffff; color: #0f172a; border-color: #cbd5e1; }
+        html.theme-light .auth-input::placeholder { color: #94a3b8; }
+        html.theme-light .auth-divider { border-color: #e2e8f0; }
+        html.theme-light .auth-muted { color: #64748b !important; }
+        html.theme-light .theme-toggle { background: #ffffff; border-color: #e2e8f0; color: #475569; }
+        html.theme-light .theme-toggle .theme-sun { display: none; }
+        html.theme-light .theme-toggle .theme-moon { display: block; }
+        .theme-toggle .theme-moon { display: none; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200 min-h-screen flex items-center justify-center p-4 overflow-x-hidden relative">
+    <button type="button" onclick="toggleStandaloneTheme()" class="theme-toggle absolute top-5 right-5 z-20 w-10 h-10 rounded-xl border border-slate-700/50 bg-slate-900/60 text-slate-300 flex items-center justify-center transition-all" aria-label="Switch to light mode" title="Switch theme">
+        <i data-lucide="sun" class="theme-sun w-4 h-4"></i>
+        <i data-lucide="moon" class="theme-moon w-4 h-4"></i>
+    </button>
+    
+    <!-- Background Glows -->
+    <div class="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-brand-primary/10 blur-[120px] rounded-full"></div>
+    <div class="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500/10 blur-[120px] rounded-full"></div>
+
+    <div class="w-full max-w-md space-y-8 relative z-10 py-8">
+        <!-- Logo -->
+        <div class="text-center">
+            <a href="/" class="inline-flex items-center gap-2 text-3xl font-black bg-gradient-to-r from-brand-primary to-rose-400 bg-clip-text text-transparent">
+                <i data-lucide="clapperboard" class="text-brand-primary w-8 h-8"></i>
+                Critix
+            </a>
+            <h2 class="auth-title mt-6 text-3xl font-extrabold text-white">Join the community</h2>
+            <p class="auth-muted mt-2 text-sm text-slate-400">Start your cinematic journey today.</p>
+        </div>
+
+        <div class="auth-card bg-slate-900/50 backdrop-blur-xl border border-slate-800 p-8 rounded-[2.5rem] shadow-2xl shadow-black/50">
+            {% if errors %}
+                <div class="mb-6 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm space-y-1">
+                    {% for e in errors %}
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+                            {{ e }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="post" class="space-y-5">
+                {% csrf_token %}
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Username</label>
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i data-lucide="user" class="w-5 h-5 text-slate-600 group-focus-within:text-brand-primary transition-colors"></i>
+                        </div>
+                        <input type="text" name="username" required
+                               class="auth-input w-full bg-slate-950 border border-slate-800 rounded-2xl py-3 pl-12 pr-4 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary/50 transition-all"
+                               placeholder="Choose a username">
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i data-lucide="mail" class="w-5 h-5 text-slate-600 group-focus-within:text-brand-primary transition-colors"></i>
+                        </div>
+                        <input type="email" name="email" required
+                               class="auth-input w-full bg-slate-950 border border-slate-800 rounded-2xl py-3 pl-12 pr-4 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary/50 transition-all"
+                               placeholder="your@email.com">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-5">
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Password</label>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i data-lucide="lock" class="w-5 h-5 text-slate-600 group-focus-within:text-brand-primary transition-colors"></i>
+                            </div>
+                            <input type="password" name="password1" required
+                                   class="auth-input w-full bg-slate-950 border border-slate-800 rounded-2xl py-3 pl-12 pr-12 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary/50 transition-all"
+                                   placeholder="Min. 8 characters">
+                        <button type="button" class="toggle-password absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-brand-primary transition-colors" aria-label="Show password" tabindex="-1"><i data-lucide="eye" class="eye-show w-5 h-5"></i><i data-lucide="eye-off" class="eye-hide w-5 h-5 hidden"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Confirm Password</label>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i data-lucide="shield-check" class="w-5 h-5 text-slate-600 group-focus-within:text-brand-primary transition-colors"></i>
+                            </div>
+                            <input type="password" name="password2" required
+                                   class="auth-input w-full bg-slate-950 border border-slate-800 rounded-2xl py-3 pl-12 pr-12 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary/50 transition-all"
+                                   placeholder="Repeat password">
+                        <button type="button" class="toggle-password absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-brand-primary transition-colors" aria-label="Show password" tabindex="-1"><i data-lucide="eye" class="eye-show w-5 h-5"></i><i data-lucide="eye-off" class="eye-hide w-5 h-5 hidden"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-brand-primary hover:bg-brand-accent text-white font-bold py-4 rounded-2xl shadow-lg shadow-brand-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                        Create Account
+                        <i data-lucide="user-plus" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </form>
+
+            <div class="auth-divider mt-8 pt-8 border-t border-slate-800 text-center">
+                <p class="text-slate-400 text-sm">
+                    Already have an account? 
+                    <a href="{% url 'login' %}" class="text-white font-bold hover:text-brand-primary transition-colors">Sign in here</a>
+                </p>
+            </div>
+        </div>
+        
+
+    </div>
+
+    <script>
+        function toggleStandaloneTheme() {
+            const isLight = document.documentElement.classList.toggle('theme-light');
+            document.documentElement.classList.toggle('dark', !isLight);
+            localStorage.setItem('critix-theme', isLight ? 'light' : 'dark');
+            const button = document.querySelector('.theme-toggle');
+            if (button) button.setAttribute('aria-label', isLight ? 'Switch to dark mode' : 'Switch to light mode');
+        }
+        // Show / hide password (eye icon)
+        document.querySelectorAll('.toggle-password').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const input = btn.parentElement.querySelector('input');
+                const show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                btn.querySelector('.eye-show').classList.toggle('hidden', show);
+                btn.querySelector('.eye-hide').classList.toggle('hidden', !show);
+                btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+            });
+        });
+        lucide.createIcons();
+    </script>
+</body>
+</html>

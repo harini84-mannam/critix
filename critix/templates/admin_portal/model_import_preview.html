@@ -1,0 +1,178 @@
+{% extends 'admin_portal/base.html' %}
+
+{% block page_title %}Preview Import{% endblock %}
+{% block breadcrumb %}Admin / {{ verbose_name_pl }} / Import / Preview{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    
+    <!-- ── HEADER ── -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+            <h2 class="text-3xl font-black text-white">Preview Import</h2>
+            <p class="text-sm text-slate-500 font-bold uppercase tracking-widest mt-1">Reviewing {{ total_rows }} Records</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="{% url 'admin_model_import' model_name %}" class="btn-premium btn-secondary">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                Back
+            </a>
+        </div>
+    </div>
+
+    {% if parse_error %}
+    <div class="p-8 rounded-[2rem] bg-rose-500/10 border border-rose-500/20 text-center space-y-4">
+        <div class="w-16 h-16 bg-rose-500/10 rounded-full flex items-center justify-center text-rose-500 mx-auto">
+            <i data-lucide="alert-octagon" class="w-8 h-8"></i>
+        </div>
+        <div class="space-y-2">
+            <h3 class="text-xl font-bold text-white">Could not read file</h3>
+            <p class="text-sm text-rose-400 opacity-80">{{ parse_error }}</p>
+        </div>
+        <a href="{% url 'admin_model_import' model_name %}" class="btn-premium btn-secondary inline-flex">Try again</a>
+    </div>
+
+    {% elif not preview_rows %}
+    <div class="p-20 text-center glass rounded-[2.5rem] border-dashed border-slate-800 space-y-6">
+        <i data-lucide="file-x" class="w-16 h-16 text-slate-700 mx-auto"></i>
+        <div class="space-y-2">
+            <h3 class="text-2xl font-bold text-white">No data rows found</h3>
+            <p class="text-slate-500">The uploaded file appears to be empty or improperly formatted.</p>
+        </div>
+        <a href="{% url 'admin_model_import' model_name %}" class="btn-premium btn-secondary inline-flex">Try a different file</a>
+
+    {% else %}
+
+    {# Securely embed JSON data #}
+    {{ preview_rows|json_script:"preview_data" }}
+    {{ headers|json_script:"header_data" }}
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- Main Preview Table -->
+        <div class="lg:col-span-3 space-y-6">
+            <div class="glass rounded-[2.5rem] overflow-hidden border-slate-800/50">
+                <div class="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
+                    <h3 class="text-sm font-black text-slate-400 uppercase tracking-widest">Data Preview</h3>
+                    <div class="flex items-center gap-4">
+                        <span id="pageInfo" class="text-xs font-bold text-slate-500">Page 1 of 1</span>
+                        <div class="flex items-center gap-2">
+                            <button id="btnPrev" onclick="prevPage()" class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white disabled:opacity-30 transition-all">
+                                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                            </button>
+                            <button id="btnNext" onclick="nextPage()" class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white disabled:opacity-30 transition-all">
+                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table id="previewTable" class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900/30 border-b border-slate-800">
+                                <th class="px-6 py-4 text-[10px] font-black text-slate-600 uppercase tracking-widest w-16">#</th>
+                                {% for h in headers %}
+                                <th class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">{{ h }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/50">
+                            <tr>
+                                <td colspan="{{ headers|length|add:1 }}" class="px-6 py-20 text-center text-slate-500">
+                                    Loading preview data...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Sidebar -->
+        <div class="lg:col-span-1 space-y-6">
+            <div class="glass p-8 rounded-[2.5rem] border-slate-800/50 space-y-6 sticky top-28">
+                <h3 class="text-lg font-black text-white">Import Summary</h3>
+                
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center py-3 border-b border-slate-800">
+                        <span class="text-xs text-slate-500 font-bold uppercase tracking-widest">Total Rows</span>
+                        <span class="text-lg font-black text-brand-primary">{{ total_rows }}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-3 border-b border-slate-800">
+                        <span class="text-xs text-slate-500 font-bold uppercase tracking-widest">Columns</span>
+                        <span class="text-lg font-black text-white">{{ headers|length }}</span>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 text-emerald-500/80 text-xs leading-relaxed">
+                    <i data-lucide="info" class="w-4 h-4 mb-2"></i>
+                    This will create <span class="font-bold text-emerald-500">{{ total_rows }}</span> new records. Existing records will not be modified.
+                </div>
+
+                <div class="pt-4 space-y-3">
+                    <form method="POST" action="{% url 'admin_model_import_preview' model_name %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="confirm">
+                        <button type="submit" class="w-full btn-premium btn-primary justify-center py-4">
+                            Yes, I'm sure
+                        </button>
+                    </form>
+                    <a href="{% url 'admin_model_import' model_name %}" class="w-full btn-premium btn-secondary justify-center py-4">
+                        No, take me back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        const rows = JSON.parse(document.getElementById('preview_data').textContent);
+        const headers = JSON.parse(document.getElementById('header_data').textContent);
+        const tbody = document.querySelector('#previewTable tbody');
+        const PAGE_SIZE = 25;
+        let currentPage = 1;
+        const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+
+        function renderPage(page) {
+            currentPage = Math.max(1, Math.min(page, totalPages));
+            const start = (currentPage - 1) * PAGE_SIZE;
+            const slice = rows.slice(start, start + PAGE_SIZE);
+            
+            let html = '';
+            slice.forEach((row, i) => {
+                html += `<tr class="hover:bg-slate-800/20 transition-colors">
+                    <td class="px-6 py-4 text-xs font-bold text-slate-600">${start + i + 1}</td>`;
+                headers.forEach(h => {
+                    const raw = row[h] != null ? String(row[h]) : '—';
+                    const display = raw.length > 60 ? raw.substring(0, 60) + '…' : raw;
+                    const safe = display.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                    html += `<td class="px-6 py-4 text-sm text-slate-300 truncate max-w-[200px]" title="${safe}">${safe}</td>`;
+                });
+                html += '</tr>';
+            });
+
+            tbody.innerHTML = html || `<tr><td colspan="${headers.length + 1}" class="px-6 py-20 text-center text-slate-500">No data rows found.</td></tr>`;
+            document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+            
+            const btnPrev = document.getElementById('btnPrev');
+            const btnNext = document.getElementById('btnNext');
+            btnPrev.disabled = currentPage <= 1;
+            btnNext.disabled = currentPage >= totalPages;
+            btnPrev.style.opacity = currentPage <= 1 ? '0.4' : '1';
+            btnNext.style.opacity = currentPage >= totalPages ? '0.4' : '1';
+        }
+
+        window.prevPage = function() { renderPage(currentPage - 1); };
+        window.nextPage = function() { renderPage(currentPage + 1); };
+
+        try {
+            renderPage(1);
+        } catch(e) {
+            tbody.innerHTML = `<tr><td colspan="100" class="px-6 py-20 text-rose-500 text-center">Preview error: ${e.message}</td></tr>`;
+        }
+    }());
+    </script>
+    {% endif %}
+</div>
+{% endblock %}

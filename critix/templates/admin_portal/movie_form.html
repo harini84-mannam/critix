@@ -1,0 +1,140 @@
+{% extends 'admin_portal/base.html' %}
+
+{% block page_title %}{% if mode == 'edit' %}Edit{% else %}Add{% endif %} {{ verbose_name }}{% endblock %}
+{% block breadcrumb %}Admin / <a href="{% url 'admin_model_list' model_name %}" style="color:#5b8dee; text-decoration:none;">{{ verbose_name }}</a> / {% if mode == 'edit' %}Edit{% else %}Add{% endif %}{% endblock %}
+
+{% block content %}
+<div class="generic-form-wrap" style="max-width:720px;">
+    <h2 style="font-size:1.4rem; margin-bottom:24px;">
+        {% if mode == 'edit' %}✏️ Edit {{ verbose_name }}{% else %}➕ Add New {{ verbose_name }}{% endif %}
+    </h2>
+
+    {% if form.non_field_errors %}
+    <div style="background:rgba(255,107,107,0.1); border:1px solid rgba(255,107,107,0.3);
+                color:#ff8080; padding:16px; border-radius:8px; margin-bottom:24px;">
+        <div style="font-weight:600; margin-bottom:8px;">❌ Please fix the following errors:</div>
+        {% for error in form.non_field_errors %}
+        <div style="margin-bottom:6px;">• {{ error }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data"
+          style="background:#16213e; padding:28px; border-radius:12px; border:1px solid #253351;">
+        {% csrf_token %}
+
+        {% for field in form %}
+        <div class="form-group">
+            <label class="form-label" for="{{ field.id_for_label }}">
+                {{ field.label }}
+                {% if field.field.required %}<span style="color:#e94560;">*</span>{% endif %}
+            </label>
+
+            {{ field }}
+
+            {% if field.help_text %}
+            <small style="color:#8892a4; font-size:0.8rem; display:block; margin-top:6px;">
+                {{ field.help_text }}
+            </small>
+            {% endif %}
+
+            {% for error in field.errors %}
+            <div style="color:#ff8080; font-size:0.85rem; margin-top:6px;">⚠ {{ error }}</div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:32px; padding-top:20px; border-top:1px solid #253351;">
+            <button type="submit" name="_save" class="btn btn-primary" style="padding:14px; font-size:1rem;">
+                {% if mode == 'edit' %}💾 Save Changes{% else %}➕ Add {{ verbose_name }}{% endif %}
+            </button>
+
+            <div style="display:flex; gap:10px;">
+                <button type="submit" name="_addanother" class="btn btn-secondary" style="flex:1; padding:12px;">
+                    ➕ Save and add another
+                </button>
+
+                {% if mode == 'edit' %}
+                <button type="submit" name="_continue" class="btn btn-secondary" style="flex:1; padding:12px;">
+                    ✏️ Save and continue editing
+                </button>
+                {% endif %}
+            </div>
+
+            <a href="{% url 'admin_model_list' model_name %}"
+               class="btn btn-secondary" style="padding:12px; text-align:center; color:#8892a4;">
+                ✕ Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+<style>
+   
+    .generic-form-wrap input[type="text"],
+    .generic-form-wrap input[type="number"],
+    .generic-form-wrap input[type="email"],
+    .generic-form-wrap input[type="url"],
+    .generic-form-wrap input[type="password"],
+    .generic-form-wrap input[type="date"],
+    .generic-form-wrap input[type="datetime-local"],
+    .generic-form-wrap input[type="file"],
+    .generic-form-wrap select,
+    .generic-form-wrap textarea {
+        width: 100%;
+        padding: 10px 12px;
+        background: #0f3460;
+        border: 1px solid #253351;
+        border-radius: 6px;
+        color: #fff;
+        font-size: 0.9rem;
+        outline: none;
+        transition: border-color 0.2s;
+        font-family: inherit;
+    }
+
+    .generic-form-wrap input:focus,
+    .generic-form-wrap select:focus,
+    .generic-form-wrap textarea:focus {
+        border-color: #e94560;
+        box-shadow: 0 0 0 2px rgba(233,69,96,0.15);
+    }
+
+    .generic-form-wrap select option { background: #16213e; color: #fff; }
+
+    .generic-form-wrap textarea { min-height: 110px; resize: vertical; }
+
+    .generic-form-wrap input[type="checkbox"] {
+        width: auto;
+        accent-color: #e94560;
+        margin-right: 8px;
+        transform: scale(1.2);
+    }
+
+    .generic-form-wrap input[type="file"] { color: #8892a4; cursor: pointer; }
+
+    .generic-form-wrap input[type="file"]::file-selector-button {
+        background: #5b8dee;
+        color: #fff;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        margin-right: 12px;
+        cursor: pointer;
+        transition: background 0.2s;
+        font-family: inherit;
+    }
+
+    .generic-form-wrap input[type="file"]::file-selector-button:hover {
+        background: #4a7adb;
+    }
+
+    .generic-form-wrap input.is-invalid,
+    .generic-form-wrap select.is-invalid,
+    .generic-form-wrap textarea.is-invalid {
+        border-color: #ef4444;
+    }
+</style>
+{% endblock %}
