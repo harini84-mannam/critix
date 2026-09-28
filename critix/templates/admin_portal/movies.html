@@ -1,0 +1,54 @@
+{% extends 'admin_portal/base.html' %}
+
+{% block page_title %}Movies{% endblock %}
+{% block breadcrumb %}Management / Movies{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h2 style="font-size: 1.4rem;">🎥 Movie Management</h2>
+    <a href="{% url 'admin_movie_add' %}" class="btn btn-primary">+ Add Movie</a>
+</div>
+
+<form method="GET" style="margin-bottom: 24px;">
+    <div style="display: flex; gap: 12px;">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search by title..." class="form-input" style="flex: 1;">
+        <button type="submit" class="btn btn-primary">Search</button>
+    </div>
+</form>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Genre</th>
+                <th>Year</th>
+                <th>Avg Rating</th>
+                <th>Reviews</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for movie in movies %}
+            <tr>
+                <td><strong>{{ movie.title }}</strong></td>
+                <td>{{ movie.genre }}</td>
+                <td>{{ movie.release_year }}</td>
+                <td>⭐ {{ movie.avg_rating|floatformat:1|default:"0.0" }}/5</td>
+                <td>{{ movie.review_count }}</td>
+                <td>{{ movie.created_at|date:"d M Y" }}</td>
+                <td style="display: flex; gap: 8px;">
+                    <a href="{% url 'admin_movie_edit' movie.id %}" class="btn btn-secondary btn-sm">Edit</a>
+                    <a href="{% url 'admin_movie_delete' movie.id %}" class="btn btn-danger btn-sm">Delete</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 40px 16px; color: #8892a4;">No movies found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

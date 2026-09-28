@@ -1,0 +1,792 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ movie.title }} | Critix{% endblock %}
+
+{% block og_tags %}
+<meta property="og:site_name" content="Critix">
+<meta property="og:type" content="video.movie">
+<meta property="og:title" content="{{ movie.title }} ({{ movie.release_year }}) | Critix">
+<meta property="og:description" content="{{ movie.description|truncatewords:30 }}">
+{% if movie.poster %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ movie.poster.url }}">{% endif %}
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
+<meta name="twitter:card" content="summary_large_image">
+{% endblock %}
+
+{% block content %}
+<div class="space-y-12">
+    
+    <!-- ── BACK BUTTON ── -->
+    <a href="{% url 'movie_list' %}" class="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors group">
+        <i data-lucide="arrow-left" class="w-5 h-5 group-hover:-translate-x-1 transition-transform"></i>
+        Back to Movies
+    </a>
+
+    <!-- ── MOVIE HEADER SECTION ── -->
+        <section class="movie-detail-hero relative">
+        <!-- Background Blur/Glow -->
+        <div class="absolute -top-20 -left-20 w-96 h-96 bg-brand-primary/10 blur-[100px] rounded-full -z-10"></div>
+
+        <!-- Backdrop banner: a blurred still (or poster) behind the title -->
+        {% if backdrop %}
+        <div class="absolute inset-x-0 -top-8 h-72 md:h-96 overflow-hidden rounded-[3rem] -z-20">
+            <img src="{{ backdrop.url }}" alt="" class="movie-detail-backdrop h-full w-full object-cover object-top scale-110 blur-2xl opacity-30">
+            <div class="movie-detail-backdrop-overlay absolute inset-0 bg-gradient-to-b from-slate-950/40 via-slate-950/80 to-slate-950"></div>
+        </div>
+        {% endif %}
+        
+        <div class="flex flex-col lg:flex-row gap-12">
+            <!-- Poster -->
+            <div class="w-full lg:w-1/3 shrink-0">
+                <div class="sticky top-28">
+                    <div class="movie-poster-frame mx-auto w-full max-w-sm aspect-[2/3] rounded-3xl overflow-hidden bg-slate-900 shadow-2xl shadow-black/50 border border-slate-800">
+                        {% if movie.poster %}
+                            <img src="{{ movie.poster.url }}" alt="{{ movie.title }}" class="h-full w-full object-cover object-center">
+                        {% else %}
+                            <div class="h-full w-full bg-slate-800 flex items-center justify-center">
+                                <i data-lucide="film" class="w-20 h-20 text-slate-700"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% if gallery_media %}
+                    <a href="#movie-gallery" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-brand-primary/30 bg-brand-primary/10 px-4 py-3 text-sm font-bold text-brand-primary transition hover:border-brand-primary hover:bg-brand-primary hover:text-white">
+                        <i data-lucide="images" class="h-4 w-4"></i>
+                        {{ gallery_media|length }} photo{{ gallery_media|length|pluralize }}
+                    </a>
+                    {% endif %}
+                    
+                    <!-- Quick Stats below poster -->
+                    <div class="mt-6 grid grid-cols-2 gap-4">
+                        <div class="glass p-4 rounded-2xl text-center">
+                            <p class="text-xs text-slate-500 uppercase font-bold tracking-widest mb-1">Rating</p>
+                            <div class="flex items-center justify-center gap-1 text-yellow-500 font-black text-xl">
+                                <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                                {{ movie.average_rating|floatformat:1 }}
+                            </div>
+                        </div>
+                        <div class="glass p-4 rounded-2xl text-center">
+                            <p class="text-xs text-slate-500 uppercase font-bold tracking-widest mb-1">Reviews</p>
+                            <div class="text-white font-black text-xl">
+                                {{ reviews_data|length }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rating Breakdown -->
+                    {% if reviews_data %}
+                    <div class="glass mt-4 p-5 rounded-2xl space-y-2">
+                        <p class="text-xs text-slate-500 uppercase font-bold tracking-widest mb-2">Rating Breakdown</p>
+                        {% for row in rating_breakdown %}
+                        <div class="flex items-center gap-3 text-xs">
+                            <span class="w-8 flex items-center gap-0.5 text-slate-400 font-bold shrink-0">{{ row.stars }}<i data-lucide="star" class="w-3 h-3 fill-current text-yellow-500"></i></span>
+                            <div class="flex-1 h-2 rounded-full bg-slate-800 overflow-hidden">
+                                <div class="h-full bg-yellow-500 rounded-full" data-width="{{ row.percent }}"></div>
+                            </div>
+                            <span class="w-6 text-right text-slate-500 shrink-0">{{ row.count }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Where to Watch -->
+                    {% if movie.watch_providers.flatrate or movie.watch_providers.rent or movie.watch_providers.buy %}
+                    <div class="glass mt-4 p-5 rounded-2xl space-y-3">
+                        <p class="text-xs text-slate-500 uppercase font-bold tracking-widest">Where to Watch</p>
+                        {% for provider in movie.watch_providers.flatrate %}
+                        <div class="flex items-center gap-2">
+                            {% if provider.logo %}<img src="{{ provider.logo }}" alt="{{ provider.name }}" loading="lazy" class="w-6 h-6 rounded-md">{% endif %}
+                            <span class="text-sm text-slate-300">{{ provider.name }}</span>
+                        </div>
+                        {% endfor %}
+                        {% if movie.watch_providers.rent or movie.watch_providers.buy %}
+                        <p class="text-[10px] text-slate-600">Also available to rent or buy.</p>
+                        {% endif %}
+                        <p class="text-[10px] text-slate-600 pt-1 border-t border-slate-800/50">Streaming availability data by JustWatch.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Details -->
+            <div class="lg:w-2/3 space-y-8">
+                <div class="space-y-4">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <span class="px-3 py-1 rounded-full bg-brand-primary/20 text-brand-primary text-xs font-bold uppercase tracking-wider">
+                            {{ movie.genre }}
+                        </span>
+                        <span class="text-slate-500 flex items-center gap-1 text-sm">
+                            <i data-lucide="calendar" class="w-4 h-4"></i>
+                            {{ movie.release_year }}
+                        </span>
+                    </div>
+                    
+                    <h1 class="text-5xl md:text-7xl font-black text-white leading-tight">{{ movie.title }}</h1>
+                    
+                    <p class="text-xl text-slate-400 leading-relaxed font-light">
+                        {{ movie.description }}
+                    </p>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap gap-4 pt-4">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'toggle_watchlist' movie.id %}"
+                           title="{% if in_watchlist %}Remove from Watchlist{% else %}Add to Watchlist{% endif %}"
+                           class="btn-premium {% if in_watchlist %}bg-rose-500/10 text-rose-500 border border-rose-500/50{% else %}btn-primary{% endif %} px-8 py-4">
+                            <i data-lucide="{% if in_watchlist %}heart-off{% else %}heart{% endif %}" class="w-6 h-6"></i>
+                            {% if in_watchlist %}In Watchlist{% else %}Add to Watchlist{% endif %}
+                        </a>
+                        
+                        <a href="{% url 'toggle_watched' movie.id %}" 
+                           class="btn-premium {% if in_watched %}bg-emerald-500/10 text-emerald-500 border border-emerald-500/50{% else %}bg-emerald-600 text-white hover:bg-emerald-500{% endif %} px-8 py-4">
+                            <i data-lucide="{% if in_watched %}check-circle{% else %}eye{% endif %}" class="w-6 h-6"></i>
+                            {% if in_watched %}Watched{% else %}Mark as Watched{% endif %}
+                        </a>
+                    {% else %}
+                        <div class="glass p-6 rounded-3xl border-brand-primary/20 flex items-center gap-4 w-full">
+                            <div class="w-12 h-12 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary shrink-0">
+                                <i data-lucide="lock" class="w-6 h-6"></i>
+                            </div>
+                            <p class="text-slate-400">
+                                <a href="{% url 'login' %}" class="text-brand-primary font-bold hover:underline">Log in</a> to save this movie to your collection and share your thoughts.
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Recommended Section (if watched) -->
+                {% if recommended_movies %}
+                <div class="pt-12 space-y-6">
+                    <h3 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <i data-lucide="sparkles" class="text-brand-primary"></i>
+                        Because you watched this
+                    </h3>
+                    <div class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                        {% for rec in recommended_movies %}
+                        <a href="{% url 'movie_detail' rec.id %}" class="w-32 shrink-0 group">
+                            <div class="w-32 h-48 rounded-xl overflow-hidden border border-slate-800 bg-slate-900 group-hover:border-brand-primary transition-colors">
+                                {% if rec.poster %}
+                                    <img src="{{ rec.poster.url }}" alt="{{ rec.title }}" loading="lazy" class="w-full h-full object-cover object-center group-hover:scale-110 transition-transform">
+                                {% else %}
+                                    <div class="w-full h-full bg-slate-800 flex items-center justify-center">
+                                        <i data-lucide="film" class="w-6 h-6 text-slate-700"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <p class="mt-2 text-xs font-bold text-white truncate group-hover:text-brand-primary">{{ rec.title }}</p>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- ── RICH MEDIA SECTION ── -->
+    {% if trailer_media or gallery_media or cast_members %}
+    <section id="movie-gallery" class="scroll-mt-28 space-y-10 pt-12 border-t border-slate-900" aria-label="Movie media and cast">
+        <div class="flex flex-wrap items-end justify-between gap-4">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-[0.24em] text-brand-primary">More to explore</p>
+                <h2 class="mt-2 text-3xl font-black text-white">Inside the movie</h2>
+            </div>
+            {% if gallery_media %}
+                <span class="rounded-full border border-slate-800 bg-slate-900/70 px-4 py-2 text-sm font-bold text-slate-400">
+                    {{ gallery_media|length }} photo{{ gallery_media|length|pluralize }}
+                </span>
+            {% endif %}
+        </div>
+
+        {% if trailer_media %}
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-[1.35fr_0.65fr]">
+            <div class="trailer-preview-card group relative overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-900 shadow-2xl shadow-black/20" data-preview-url="{{ trailer_media.0.preview_url }}">
+                <div class="relative aspect-video bg-slate-950">
+                    <img src="{% if movie.poster %}{{ movie.poster.url }}{% endif %}" alt="{{ movie.title }} trailer preview" class="trailer-preview-poster h-full w-full object-cover opacity-45 transition duration-700 group-hover:scale-105">
+                    <div class="trailer-preview-frame-wrap pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-700">
+                        <iframe class="trailer-preview-frame h-full w-full scale-110" src="" title="Muted trailer preview for {{ movie.title }}" allow="autoplay; encrypted-media; picture-in-picture" tabindex="-1"></iframe>
+                    </div>
+                    <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/25 to-transparent"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <button type="button" class="trailer-open-btn flex h-20 w-20 items-center justify-center rounded-full bg-brand-primary text-white shadow-2xl shadow-brand-primary/30 transition hover:scale-105 hover:bg-brand-primary/90 focus:outline-none focus:ring-4 focus:ring-brand-primary/30" data-trailer-url="{{ trailer_media.0.embed_url }}" aria-label="Watch {{ movie.title }} trailer">
+                            <i data-lucide="play" class="ml-1 h-8 w-8 fill-current"></i>
+                        </button>
+                    </div>
+                    <div class="pointer-events-none absolute bottom-0 left-0 right-0 p-6">
+                        <p class="text-xs font-bold uppercase tracking-[0.2em] text-brand-primary">Official trailer</p>
+                        <h3 class="mt-2 text-xl font-black text-white">Watch {{ movie.title }}</h3>
+                        {% if trailer_media.0.preview_url %}<p class="mt-1 text-xs text-slate-300 opacity-0 transition group-hover:opacity-100">Hover to preview</p>{% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="glass flex flex-col justify-between rounded-[2rem] p-7">
+                <div>
+                    <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-primary/10 text-brand-primary">
+                        <i data-lucide="clapperboard" class="h-6 w-6"></i>
+                    </div>
+                    <h3 class="text-xl font-black text-white">A closer look</h3>
+                    <p class="mt-3 text-sm leading-relaxed text-slate-400">Watch the trailer before you decide what to add to your watchlist.</p>
+                </div>
+                <button type="button" class="trailer-open-btn mt-8 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-800 px-5 py-3 font-bold text-white transition hover:bg-brand-primary" data-trailer-url="{{ trailer_media.0.embed_url }}">
+                    <i data-lucide="play-circle" class="h-5 w-5"></i>
+                    Watch Trailer
+                </button>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if gallery_media %}
+        <div class="space-y-5">
+            <div class="flex items-center justify-between gap-4">
+                <h3 class="flex items-center gap-2 text-xl font-black text-white"><i data-lucide="images" class="h-5 w-5 text-brand-primary"></i>Photos</h3>
+                <span class="text-sm text-slate-500">Click any image to expand</span>
+            </div>
+            <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+                {% for media in gallery_media %}
+                <button type="button" class="gallery-open-btn group relative h-48 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 text-left transition hover:-translate-y-1 hover:border-brand-primary/60 hover:shadow-xl hover:shadow-brand-primary/10 md:h-56" data-gallery-src="{% if media.image %}{{ media.image.url }}{% else %}{{ media.url }}{% endif %}" data-gallery-caption="{{ media.caption|default:movie.title }}" aria-label="Open {{ media.caption|default:movie.title }} photo">
+                    {% if media.image %}
+                        <img src="{{ media.image.url }}" alt="{{ media.caption|default:movie.title }}" loading="lazy" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
+                    {% elif media.url %}
+                        <img src="{{ media.url }}" alt="{{ media.caption|default:movie.title }}" loading="lazy" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
+                    {% else %}
+                        <div class="flex h-full items-center justify-center text-slate-700"><i data-lucide="image-off" class="h-8 w-8"></i></div>
+                    {% endif %}
+                    <span class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/85 to-transparent px-4 pb-3 pt-8 text-xs font-bold text-white opacity-0 transition group-hover:opacity-100">{{ media.caption|default:"View photo" }}</span>
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if cast_members %}
+        <div class="space-y-5">
+            <h3 class="flex items-center gap-2 text-xl font-black text-white"><i data-lucide="users" class="h-5 w-5 text-brand-primary"></i>Cast & Crew</h3>
+            <div class="flex gap-5 overflow-x-auto pb-3 scrollbar-hide">
+                {% for member in cast_members %}
+                <div class="w-28 shrink-0 text-center">
+                    <div class="mx-auto h-28 w-28 overflow-hidden rounded-full border-2 border-slate-800 bg-slate-900 transition hover:border-brand-primary">
+                        {% if member.photo %}
+                            <img src="{{ member.photo.url }}" alt="{{ member.name }}" loading="lazy" class="h-full w-full object-cover">
+                        {% else %}
+                            <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-800 to-slate-700 text-2xl font-black text-slate-300">{{ member.name.0|upper }}</div>
+                        {% endif %}
+                    </div>
+                    <p class="mt-3 truncate text-sm font-bold text-white">{{ member.name }}</p>
+                    {% if member.role %}<p class="mt-1 truncate text-xs text-slate-500">{{ member.role }}</p>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </section>
+    {% endif %}
+
+    <!-- ── REVIEWS SECTION ── -->
+    <section class="space-y-12 pt-12 border-t border-slate-900">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <h2 class="text-3xl font-black text-white">Community Reviews</h2>
+            <div class="flex items-center gap-3">
+                <span class="px-4 py-1 rounded-full bg-slate-900 border border-slate-800 text-slate-400 text-sm font-bold">
+                    {{ reviews_data|length }} Reviews
+                </span>
+                {% if reviews_data %}
+                <form method="get" class="flex items-center gap-2">
+                    <label for="review_sort" class="text-xs text-slate-500 font-bold uppercase tracking-widest">Sort</label>
+                    <select name="review_sort" id="review_sort" onchange="this.form.submit()"
+                            class="bg-slate-800/50 border border-slate-700 text-slate-300 text-sm rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-primary/30">
+                        <option value="newest" {% if review_sort == 'newest' %}selected{% endif %}>Newest</option>
+                        <option value="highest" {% if review_sort == 'highest' %}selected{% endif %}>Highest rated</option>
+                        <option value="helpful" {% if review_sort == 'helpful' %}selected{% endif %}>Most helpful</option>
+                    </select>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <!-- Reviews List -->
+            <div class="lg:col-span-2 space-y-8">
+                {% for item in reviews_data %}
+                    {% with review=item.review %}
+                    <div class="glass {% if review.comment %}p-8{% else %}px-8 py-5{% endif %} rounded-[2rem] space-y-6 relative group border-slate-800/50 hover:border-brand-primary/20 transition-all" id="review-{{ review.id }}">
+                        <div class="flex justify-between items-start">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-slate-800 to-slate-700 flex items-center justify-center text-white font-bold text-lg">
+                                    {{ review.user.username.0|upper }}
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-white">{{ review.user.username }}{% if not review.comment and user.is_authenticated and review.user == user %}<span class="ml-2 text-xs font-bold text-brand-primary">Your rating</span>{% endif %}</h4>
+                                    <p class="text-xs text-slate-500">{{ review.created_at|date:"M d, Y" }}{% if not review.comment %} &middot; Rating only{% endif %}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1 text-yellow-500 bg-yellow-500/10 px-3 py-1 rounded-full border border-yellow-500/20">
+                                <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                                <span class="font-black text-sm">{{ review.rating }}</span>
+                            </div>
+                        </div>
+
+                        {% if review.comment %}
+
+                        {% if review.contains_spoiler %}
+                        <div class="spoiler-wrap relative">
+                            <p class="spoiler-text text-slate-300 leading-relaxed text-lg blur-md select-none transition-all duration-300">
+                                {{ review.comment }}
+                            </p>
+                            <button type="button" class="spoiler-reveal-btn absolute inset-0 flex items-center justify-center gap-2 rounded-xl bg-slate-950/40 text-sm font-bold text-white hover:bg-slate-950/60 transition-all">
+                                <i data-lucide="eye-off" class="w-4 h-4"></i> Contains spoilers &middot; tap to reveal
+                            </button>
+                        </div>
+                        {% else %}
+                        <p class="text-slate-300 leading-relaxed text-lg">
+                            {{ review.comment }}
+                        </p>
+                        {% endif %}
+
+                        <!-- Review Actions -->
+                        <div class="flex items-center justify-between pt-4 border-t border-slate-800/50">
+                            <div class="flex items-center gap-2">
+                                {% if user.is_authenticated and review.user != user %}
+                                    <button class="vote-btn flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/50 border border-slate-700 hover:border-emerald-500/50 hover:text-emerald-500 transition-all {% if item.user_vote == 'like' %}border-emerald-500 text-emerald-500 bg-emerald-500/10{% endif %}"
+                                            data-action="like" data-review="{{ review.id }}">
+                                        <i data-lucide="thumbs-up" class="w-4 h-4"></i>
+                                        <span class="text-sm font-bold like-count">{{ item.likes }}</span>
+                                    </button>
+                                    <button class="vote-btn flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/50 border border-slate-700 hover:border-rose-500/50 hover:text-rose-500 transition-all {% if item.user_vote == 'dislike' %}border-rose-500 text-rose-500 bg-rose-500/10{% endif %}"
+                                            data-action="dislike" data-review="{{ review.id }}">
+                                        <i data-lucide="thumbs-down" class="w-4 h-4"></i>
+                                        <span class="text-sm font-bold dislike-count">{{ item.dislikes }}</span>
+                                    </button>
+                                    <button class="reply-toggle-btn flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/50 border border-slate-700 hover:border-brand-primary/50 hover:text-brand-primary transition-all"
+                                            data-action="reply" data-review="{{ review.id }}">
+                                        <i data-lucide="message-circle" class="w-4 h-4"></i>
+                                        <span class="text-sm font-bold">Reply</span>
+                                    </button>
+                                {% else %}
+                                    <div class="flex items-center gap-4 text-slate-500 text-sm font-bold">
+                                        <span class="flex items-center gap-1"><i data-lucide="thumbs-up" class="w-4 h-4"></i> {{ item.likes }}</span>
+                                        <span class="flex items-center gap-1"><i data-lucide="thumbs-down" class="w-4 h-4"></i> {{ item.dislikes }}</span>
+                                        {% if user.is_authenticated and review.user == user %}<span class="text-brand-primary">Your review</span>{% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            {% if user.is_authenticated and review.user == user %}
+                                <a href="{% url 'delete_review' review.id %}" class="inline-flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/5 px-3 py-2 text-xs font-bold text-rose-400 transition-colors hover:border-rose-500/60 hover:bg-rose-500/10 hover:text-rose-300" title="Delete your review" aria-label="Delete your review" onclick="return confirm('Permanently delete this review?')">
+                                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                    <span>Delete</span>
+                                </a>
+                            {% elif user.is_authenticated and not item.already_reported and review.user != user %}
+                                <button class="report-btn text-slate-600 hover:text-rose-500 transition-colors" data-action="report" data-review="{{ review.id }}">
+                                    <i data-lucide="flag" class="w-5 h-5"></i>
+                                </button>
+                            {% elif item.already_reported %}
+                                <span class="text-slate-600 italic text-xs flex items-center gap-1">
+                                    <i data-lucide="check" class="w-3 h-3"></i> Reported
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        {% endif %}
+
+                        <!-- Replies -->
+                        {% if item.replies %}
+                        <div class="space-y-4 pt-4 ml-6 border-l-2 border-slate-800 pl-6">
+                            {% for reply in item.replies %}
+                            <div class="flex gap-3">
+                                <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-400">
+                                    {{ reply.user.username.0|upper }}
+                                </div>
+                                <div class="flex-1 space-y-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-sm font-bold text-white">{{ reply.user.username }}</span>
+                                        <span class="text-[10px] text-slate-600">{{ reply.created_at|date:"M d, Y" }}</span>
+                                        {% if user.is_authenticated and reply.user == user %}
+                                        <a href="{% url 'delete_reply' reply.id %}" class="inline-flex items-center gap-1 rounded-lg border border-rose-500/30 bg-rose-500/5 px-2 py-1 text-[10px] font-bold text-rose-400 transition-colors hover:border-rose-500/60 hover:bg-rose-500/10 hover:text-rose-300" title="Delete your reply" aria-label="Delete your reply" onclick="return confirm('Permanently delete this reply?')">
+                                            <i data-lucide="trash-2" class="h-3.5 w-3.5"></i>
+                                            <span>Delete</span>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                    <p class="text-sm text-slate-400">{{ reply.comment }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Reply Form -->
+                        {% if user.is_authenticated %}
+                        <div class="hidden mt-4 ml-6 reply-form-area" id="reply-form-{{ review.id }}">
+                            <form method="POST" action="{% url 'reply_review' review.id %}" class="space-y-3">
+                                {% csrf_token %}
+                                <textarea name="comment" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-sm text-white focus:ring-2 focus:ring-brand-primary/30 outline-none transition-all" placeholder="Write your reply..."></textarea>
+                                <button type="submit" class="btn-premium btn-primary py-2 text-xs">Post Reply</button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endwith %}
+                {% empty %}
+                    <div class="py-20 text-center glass rounded-[2rem] border-dashed border-slate-800">
+                        <i data-lucide="message-square" class="w-12 h-12 text-slate-700 mx-auto mb-4"></i>
+                        <h3 class="text-xl font-bold text-white">No reviews yet</h3>
+                        <p class="text-slate-500">Be the first one to share your thoughts on this movie!</p>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Review Form Sidebar -->
+            <div class="lg:col-span-1">
+                <div class="sticky top-28 space-y-6">
+                    {% if user.is_authenticated %}
+                        {% if user_review %}
+                            <div class="glass p-6 rounded-[2rem] space-y-4 border-emerald-500/20">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0">
+                                        <i data-lucide="check-circle" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-white">{% if user_review.comment %}Your review is published{% else %}Your rating is saved{% endif %}</h3>
+                                        <p class="text-sm text-slate-400 mt-1">Update your rating or {% if user_review.comment %}comment{% else %}add a written review{% endif %} whenever you like.</p>
+                                    </div>
+                                </div>
+                                <a href="{% url 'edit_review' user_review.id %}" class="btn-premium btn-secondary w-full justify-center">
+                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                    {% if user_review.comment %}Edit Review{% else %}Add a written review{% endif %}
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="glass p-8 rounded-[2rem] space-y-6 border-brand-primary/20">
+                                <h3 class="text-2xl font-black text-white">Write a Review</h3>
+                                <form method="post" class="space-y-6">
+                                    {% csrf_token %}
+                                    <div class="space-y-3">
+                                        <label class="text-sm font-bold text-slate-400 uppercase tracking-widest">Your Rating</label>
+                                        <div class="flex flex-row-reverse justify-end gap-2 star-rating">
+                                            {% for i in "54321"|make_list %}
+                                            <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" class="hidden peer" required>
+                                            <label for="star{{ i }}" class="cursor-pointer text-slate-700 hover:text-yellow-500 peer-checked:text-yellow-500 peer-hover:text-yellow-500 transition-all">
+                                                <i data-lucide="star" class="w-8 h-8 fill-current"></i>
+                                            </label>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="space-y-3">
+                                        <label class="text-sm font-bold text-slate-400 uppercase tracking-widest">Your Thoughts</label>
+                                        <textarea name="comment" rows="5" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white focus:ring-2 focus:ring-brand-primary/30 outline-none transition-all" placeholder="What did you think of the movie? No spoilers!" oninput="document.getElementById('reviewSubmitLabel').textContent = this.value.trim() ? 'Submit Review' : 'Submit Rating'"></textarea>
+                                    </div>
+                                    <label class="flex items-center gap-3 text-sm text-slate-400 cursor-pointer select-none">
+                                        <input type="checkbox" name="contains_spoiler" value="on" class="w-4 h-4 rounded border-slate-700 bg-slate-950 accent-brand-primary">
+                                        This review contains spoilers (it will be blurred for others)
+                                    </label>
+                                    <button type="submit" class="btn-premium btn-primary w-full justify-center py-4">
+                                        <span id="reviewSubmitLabel">Submit Rating</span>
+                                    </button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="glass p-8 rounded-[2rem] text-center space-y-6 border-brand-primary/20">
+                            <div class="w-16 h-16 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary mx-auto">
+                                <i data-lucide="message-square-plus" class="w-8 h-8"></i>
+                            </div>
+                            <div class="space-y-2">
+                                <h3 class="text-xl font-bold text-white">Join the Discussion</h3>
+                                <p class="text-sm text-slate-400">Log in to share your review and rate this movie with the community.</p>
+                            </div>
+                            <a href="{% url 'login' %}" class="btn-premium btn-primary w-full justify-center py-4">
+                                Login to Review
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<!-- Trailer Modal -->
+<div id="trailerModal" class="fixed inset-0 z-[70] hidden items-center justify-center bg-slate-950/85 p-4 backdrop-blur-md" role="dialog" aria-modal="true" aria-label="Movie trailer">
+    <button type="button" class="trailer-close-btn absolute right-5 top-5 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-slate-900/90 text-slate-300 transition hover:bg-brand-primary hover:text-white" aria-label="Close trailer">
+        <i data-lucide="x" class="h-5 w-5"></i>
+    </button>
+    <div class="w-full max-w-5xl overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-950 shadow-2xl">
+        <div class="aspect-video relative bg-black">
+            <iframe id="trailerFrame" class="h-full w-full" src="" title="Movie trailer" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+            <!-- Fallback button if iframe fails or user prefers direct watch -->
+            <div id="trailerFallback" class="absolute bottom-4 right-4 z-10 hidden">
+                <a id="trailerDirectLink" href="" target="_blank" class="flex items-center gap-2 rounded-xl bg-slate-900/80 px-4 py-2 text-xs font-bold text-white backdrop-blur-md transition hover:bg-brand-primary">
+                    <i data-lucide="external-link" class="h-4 w-4"></i>
+                    Watch on YouTube
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gallery Lightbox -->
+<div id="galleryLightbox" class="fixed inset-0 z-[70] hidden items-center justify-center bg-slate-950/90 p-4 backdrop-blur-md" role="dialog" aria-modal="true" aria-label="Movie photo">
+    <button type="button" class="gallery-close-btn absolute right-5 top-5 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-slate-900/90 text-slate-300 transition hover:bg-brand-primary hover:text-white" aria-label="Close photo">
+        <i data-lucide="x" class="h-5 w-5"></i>
+    </button>
+    <figure class="max-h-[90vh] max-w-5xl text-center">
+        <img id="galleryFrame" src="" alt="" class="max-h-[78vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl">
+        <figcaption id="galleryCaption" class="mt-4 text-sm font-medium text-slate-300"></figcaption>
+    </figure>
+</div>
+
+<!-- Report Modal (Simplified version) -->
+<div id="reportModal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onclick="closeReportModal()"></div>
+    <div class="glass w-full max-w-md p-8 rounded-[2.5rem] relative z-10 space-y-6 animate-slide-up">
+        <h3 class="text-2xl font-black text-white">Report Review</h3>
+        <p class="text-slate-400 text-sm">Why are you reporting this review? Our moderators will look into it.</p>
+        
+        <form id="reportForm" method="POST" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="review_id" id="reportReviewId">
+            <div class="space-y-3">
+                <label class="flex items-center gap-3 p-4 rounded-2xl bg-slate-900 border border-slate-800 cursor-pointer hover:border-brand-primary/50 transition-all">
+                    <input type="radio" name="reason" value="SPAM" class="w-4 h-4 accent-brand-primary" required>
+                    <span class="text-slate-300 font-medium">Spam or misleading</span>
+                </label>
+                <label class="flex items-center gap-3 p-4 rounded-2xl bg-slate-900 border border-slate-800 cursor-pointer hover:border-brand-primary/50 transition-all">
+                    <input type="radio" name="reason" value="SPOILER" class="w-4 h-4 accent-brand-primary" required>
+                    <span class="text-slate-300 font-medium">Contains spoilers</span>
+                </label>
+                <label class="flex items-center gap-3 p-4 rounded-2xl bg-slate-900 border border-slate-800 cursor-pointer hover:border-brand-primary/50 transition-all">
+                    <input type="radio" name="reason" value="OFFENSIVE" class="w-4 h-4 accent-brand-primary" required>
+                    <span class="text-slate-300 font-medium">Offensive language</span>
+                </label>
+                <label class="flex items-center gap-3 p-4 rounded-2xl bg-slate-900 border border-slate-800 cursor-pointer hover:border-brand-primary/50 transition-all">
+                    <input type="radio" name="reason" value="OTHER" class="w-4 h-4 accent-brand-primary" required>
+                    <span class="text-slate-300 font-medium">Other</span>
+                </label>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="button" onclick="closeReportModal()" class="flex-1 btn-premium btn-secondary justify-center">Cancel</button>
+                <button type="submit" class="flex-1 btn-premium btn-primary justify-center">Submit Report</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Data elements to safely pass Django variables to JS -->
+<div id="csrf-token-data" data-token="{{ csrf_token }}" class="hidden"></div>
+
+<script>
+    // Star rating hover effect
+    const stars = document.querySelectorAll('.star-rating label');
+    stars.forEach(star => {
+        star.addEventListener('mouseenter', function() {
+            let label = this;
+            while(label) {
+                label.classList.add('text-yellow-500');
+                label = label.nextElementSibling;
+            }
+        });
+        star.addEventListener('mouseleave', function() {
+            stars.forEach(s => s.classList.remove('text-yellow-500'));
+        });
+    });
+
+    // Toggle Reply Form
+    document.querySelectorAll('.reply-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const reviewId = this.getAttribute('data-review');
+            const form = document.getElementById(`reply-form-${reviewId}`);
+            if (form) form.classList.toggle('hidden');
+        });
+    });
+
+    // Report Modal Logic
+    function closeReportModal() {
+        const modal = document.getElementById('reportModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    }
+
+    document.querySelectorAll('.report-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const reviewId = this.getAttribute('data-review');
+            const reportReviewId = document.getElementById('reportReviewId');
+            const reportForm = document.getElementById('reportForm');
+            const reportModal = document.getElementById('reportModal');
+            
+            if (reportReviewId) reportReviewId.value = reviewId;
+            if (reportForm) reportForm.action = `/review/${reviewId}/report/`;
+            if (reportModal) {
+                reportModal.classList.remove('hidden');
+                reportModal.classList.add('flex');
+            }
+        });
+    });
+
+    // Rich media modals
+    (function() {
+        const trailerModal = document.getElementById('trailerModal');
+        const trailerFrame = document.getElementById('trailerFrame');
+        const galleryLightbox = document.getElementById('galleryLightbox');
+        const galleryFrame = document.getElementById('galleryFrame');
+        const galleryCaption = document.getElementById('galleryCaption');
+
+        function openModal(element) {
+            element.classList.remove('hidden');
+            element.classList.add('flex');
+            document.body.classList.add('overflow-hidden');
+        }
+
+        function closeModal(element) {
+            if (!element) return;
+            element.classList.add('hidden');
+            element.classList.remove('flex');
+            if (!trailerModal || trailerModal.classList.contains('hidden')) {
+                document.body.classList.remove('overflow-hidden');
+            }
+        }
+
+        // Load the preview only after a desktop hover begins, so mobile and initial page loads stay light.
+        document.querySelectorAll('.trailer-preview-card').forEach(card => {
+            const previewUrl = card.dataset.previewUrl;
+            const frame = card.querySelector('.trailer-preview-frame');
+            const frameWrap = card.querySelector('.trailer-preview-frame-wrap');
+            let hoverTimer;
+            if (!previewUrl || !frame || !frameWrap) return;
+            card.addEventListener('mouseenter', function() {
+                if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+                    hoverTimer = window.setTimeout(function() {
+                        frame.src = previewUrl;
+                        frameWrap.classList.remove('opacity-0');
+                        frameWrap.classList.add('opacity-100');
+                    }, 350);
+                }
+            });
+            card.addEventListener('mouseleave', function() {
+                window.clearTimeout(hoverTimer);
+                frame.src = '';
+                frameWrap.classList.add('opacity-0');
+                frameWrap.classList.remove('opacity-100');
+            });
+        });
+
+        document.querySelectorAll('.trailer-open-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                if (!trailerModal || !trailerFrame) return;
+                let url = this.dataset.trailerUrl || '';
+                const fallback = document.getElementById('trailerFallback');
+                const directLink = document.getElementById('trailerDirectLink');
+                
+                if (url) {
+                    // Append origin to help with local development "Error 153"
+                    const origin = window.location.origin;
+                    const finalUrl = url.includes('?') ? `${url}&origin=${origin}` : `${url}?origin=${origin}`;
+                    trailerFrame.src = finalUrl;
+                    
+                    // Setup fallback link
+                    if (directLink) {
+                        const videoId = url.split('/').pop().split('?')[0];
+                        directLink.href = `https://www.youtube.com/watch?v=${videoId}`;
+                        if (fallback) fallback.classList.remove('hidden');
+                    }
+                }
+                openModal(trailerModal);
+            });
+        });
+        document.querySelectorAll('.trailer-close-btn').forEach(button => button.addEventListener('click', function() {
+            if (trailerFrame) trailerFrame.src = '';
+            closeModal(trailerModal);
+        }));
+        document.querySelectorAll('.gallery-open-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                if (!galleryLightbox || !galleryFrame) return;
+                galleryFrame.src = this.dataset.gallerySrc || '';
+                galleryFrame.alt = this.dataset.galleryCaption || '';
+                if (galleryCaption) galleryCaption.textContent = this.dataset.galleryCaption || '';
+                openModal(galleryLightbox);
+            });
+        });
+        document.querySelectorAll('.gallery-close-btn').forEach(button => button.addEventListener('click', function() {
+            if (galleryFrame) galleryFrame.src = '';
+            closeModal(galleryLightbox);
+        }));
+        [trailerModal, galleryLightbox].forEach(modal => modal && modal.addEventListener('click', function(event) {
+            if (event.target === modal) closeModal(modal);
+        }));
+        document.addEventListener('keydown', function(event) {
+            if (event.key !== 'Escape') return;
+            if (trailerModal && !trailerModal.classList.contains('hidden')) {
+                if (trailerFrame) trailerFrame.src = '';
+                closeModal(trailerModal);
+            }
+            if (galleryLightbox && !galleryLightbox.classList.contains('hidden')) {
+                if (galleryFrame) galleryFrame.src = '';
+                closeModal(galleryLightbox);
+            }
+        });
+    })();
+
+    // Spoiler reveal — click the overlay to unblur that review's text
+    document.querySelectorAll('.spoiler-reveal-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const wrap = btn.closest('.spoiler-wrap');
+            const text = wrap.querySelector('.spoiler-text');
+            text.classList.remove('blur-md');
+            text.style.userSelect = 'text';
+            btn.remove();
+        });
+    });
+
+    // AJAX for likes
+    (function() {
+        const csrfData = document.getElementById('csrf-token-data');
+        if (!csrfData) return;
+        const csrfToken = csrfData.getAttribute('data-token');
+        
+        document.querySelectorAll('.vote-btn').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const reviewId = this.getAttribute('data-review');
+                const action = this.getAttribute('data-action');
+                
+                try {
+                    const response = await fetch(`/review/${reviewId}/like/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({ value: action })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        const card = document.getElementById(`review-${reviewId}`);
+                        if (!card) return;
+
+                        const likeCount = card.querySelector('.like-count');
+                        const dislikeCount = card.querySelector('.dislike-count');
+                        if (likeCount) likeCount.textContent = data.likes;
+                        if (dislikeCount) dislikeCount.textContent = data.dislikes;
+                        
+                        // Toggle active classes
+                        const likeBtn = card.querySelector('[data-action="like"]');
+                        const dislikeBtn = card.querySelector('[data-action="dislike"]');
+                        
+                        if (likeBtn) likeBtn.classList.remove('border-emerald-500', 'text-emerald-500', 'bg-emerald-500/10');
+                        if (dislikeBtn) dislikeBtn.classList.remove('border-rose-500', 'text-rose-500', 'bg-rose-500/10');
+                        
+                        if (data.user_vote === 'like' && likeBtn) {
+                            likeBtn.classList.add('border-emerald-500', 'text-emerald-500', 'bg-emerald-500/10');
+                        } else if (data.user_vote === 'dislike' && dislikeBtn) {
+                            dislikeBtn.classList.add('border-rose-500', 'text-rose-500', 'bg-rose-500/10');
+                        }
+                    }
+                } catch (err) {
+                    console.error('Vote failed', err);
+                }
+            });
+        });
+    })();
+</script>
+{% endblock %}

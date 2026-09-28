@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}My Watchlist | Critix{% endblock %}
+
+{% block content %}
+<div class="space-y-12">
+    
+    <!-- ── HEADER ── -->
+    <header class="glass p-8 md:p-12 rounded-[3rem] relative overflow-hidden border-slate-800/50">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-brand-primary/10 blur-[80px] rounded-full -z-10"></div>
+        <div class="flex flex-col md:flex-row items-center justify-between gap-8">
+            <div class="space-y-2 text-center md:text-left">
+                <h1 class="text-4xl md:text-5xl font-black text-white flex items-center justify-center md:justify-start gap-4">
+                    <i data-lucide="heart" class="text-brand-primary w-10 h-10 fill-brand-primary"></i>
+                    My Watchlist
+                </h1>
+                <p class="text-slate-400">Movies you've saved to experience later.</p>
+            </div>
+            <div class="glass px-8 py-4 rounded-2xl border-slate-800/50 text-center">
+                <div class="text-3xl font-black text-white">{{ my_watchlist.count }}</div>
+                <div class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Movies Saved</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── GRID ── -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+        {% for item in my_watchlist %}
+        <div class="group relative card-premium flex flex-col h-full">
+            <!-- Remove Button -->
+            <a href="{% url 'toggle_watchlist' item.movie.id %}" 
+               class="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-slate-950/80 backdrop-blur-md border border-slate-800 flex items-center justify-center text-rose-500 hover:bg-rose-500 hover:text-white transition-all shadow-xl"
+               title="Remove from Watchlist">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </a>
+
+            <!-- Poster -->
+            <a href="{% url 'movie_detail' item.movie.id %}" class="aspect-[2/3] overflow-hidden relative block">
+                {% if item.movie.poster %}
+                    <img src="{{ item.movie.poster.url }}" alt="{{ item.movie.title }}" loading="lazy"
+                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                {% else %}
+                    <div class="w-full h-full bg-slate-800 flex items-center justify-center">
+                        <i data-lucide="film" class="w-12 h-12 text-slate-700"></i>
+                    </div>
+                {% endif %}
+                
+                <!-- Date Added Overlay -->
+                <div class="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-slate-950 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <p class="text-[10px] text-slate-300 font-bold uppercase tracking-widest">Added {{ item.added_at|date:"M d, Y" }}</p>
+                </div>
+            </a>
+            
+            <!-- Info -->
+            <div class="p-5 flex flex-col flex-1 space-y-3">
+                <div class="flex-1 space-y-1">
+                    <h3 class="text-base font-bold text-white group-hover:text-brand-primary transition-colors line-clamp-1">
+                        <a href="{% url 'movie_detail' item.movie.id %}">{{ item.movie.title }}</a>
+                    </h3>
+                    <p class="text-xs text-slate-500 truncate">{{ item.movie.genre }}</p>
+                </div>
+                
+                <div class="pt-3 border-t border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center gap-1 text-yellow-500 text-xs font-bold">
+                        <i data-lucide="star" class="w-3 h-3 fill-current"></i>
+                        {{ item.movie.average_rating|floatformat:1 }}
+                    </div>
+                    <a href="{% url 'movie_detail' item.movie.id %}" class="text-[10px] text-brand-primary font-bold uppercase tracking-widest hover:underline">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full py-32 text-center space-y-6 glass rounded-[3rem] border-dashed border-slate-800">
+            <div class="w-24 h-24 bg-slate-900 rounded-full flex items-center justify-center mx-auto text-slate-700">
+                <i data-lucide="heart" class="w-12 h-12"></i>
+            </div>
+            <div class="space-y-2">
+                <h2 class="text-3xl font-black text-white">Your watchlist is empty</h2>
+                <p class="text-slate-500 max-w-md mx-auto">Start exploring our collection and save movies you'd love to watch.</p>
+            </div>
+            <a href="{% url 'movie_list' %}" class="btn-premium btn-primary inline-flex mt-4">Discover Movies</a>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

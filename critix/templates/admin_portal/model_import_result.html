@@ -1,0 +1,57 @@
+{% extends 'admin_portal/base.html' %}
+{% block page_title %}Import Complete — {{ verbose_name_pl }}{% endblock %}
+{% block breadcrumb %}Admin / <a href="{% url 'admin_model_list' model_name %}" style="color:#5b8dee;text-decoration:none">{{ verbose_name_pl }}</a> / Import / Result{% endblock %}
+
+{% block content %}
+<div style="max-width:640px;">
+    <h2 style="font-size:1.4rem; margin-bottom:24px;">Import Result — {{ verbose_name_pl }}</h2>
+
+    {% if created %}
+    <div style="background:rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.3);
+                color:#22c55e; padding:20px 24px; border-radius:10px; margin-bottom:20px;
+                display:flex; align-items:center; gap:16px;">
+        <span style="font-size:2rem;">✅</span>
+        <div>
+            <div style="font-weight:700; font-size:1.05rem;">
+                {{ created }} record{{ created|pluralize }} imported successfully
+            </div>
+            <div style="font-size:.85rem; color:#86efac; margin-top:4px;">
+                {{ verbose_name_pl }} have been added to the database.
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if errors %}
+    <div style="background:rgba(255,107,107,.1); border:1px solid rgba(255,107,107,.3);
+                border-radius:10px; padding:20px; margin-bottom:20px;">
+        <div style="font-weight:700; color:#ff8080; margin-bottom:12px;">
+            ⚠️ {{ errors|length }} row{{ errors|length|pluralize }} failed to import
+        </div>
+        <div style="max-height:200px; overflow-y:auto;">
+            {% for err in errors %}
+            <div style="font-size:.82rem; color:#fca5a5; padding:6px 0; border-bottom:1px solid rgba(255,107,107,.15);">
+                {{ err }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not created and not errors %}
+    <div style="background:rgba(255,193,7,.1); border:1px solid rgba(255,193,7,.3);
+                color:#ffc107; padding:20px; border-radius:10px; margin-bottom:20px;">
+        ⚠️ No records were imported. The file may have been empty.
+    </div>
+    {% endif %}
+
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <a href="{% url 'admin_model_list' model_name %}" class="btn btn-primary" style="flex:1; text-align:center; padding:13px;">
+            📋 View {{ verbose_name_pl }}
+        </a>
+        <a href="{% url 'admin_model_import' model_name %}" class="btn btn-secondary" style="flex:.5; text-align:center; padding:13px;">
+            📥 Import more
+        </a>
+    </div>
+</div>
+{% endblock %}

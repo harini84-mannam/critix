@@ -1,0 +1,61 @@
+{% extends 'admin_portal/base.html' %}
+
+{% block page_title %}Users{% endblock %}
+{% block breadcrumb %}Management / Users{% endblock %}
+
+{% block content %}
+<h2 style="font-size: 1.4rem; margin-bottom: 24px;">👥 User Management</h2>
+
+<form method="GET" style="margin-bottom: 24px;">
+    <div style="display: flex; gap: 12px;">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search by username..." class="form-input" style="flex: 1;">
+        <button type="submit" class="btn btn-primary">Search</button>
+    </div>
+</form>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Reviews</th>
+                <th>Joined</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+            <tr>
+                <td><strong>{{ u.username }}</strong></td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.review_count }}</td>
+                <td>{{ u.date_joined|date:"d M Y" }}</td>
+                <td>
+                    {% if u.is_active %}
+                        <span style="color: #22c55e;">🟢 Active</span>
+                    {% else %}
+                        <span style="color: #f87171;">🔴 Inactive</span>
+                    {% endif %}
+                </td>
+                <td style="display: flex; gap: 8px;">
+                    {% if u != request.user %}
+                        <a href="{% url 'admin_user_toggle_active' u.id %}" class="btn btn-secondary btn-sm">
+                            {% if u.is_active %}Deactivate{% else %}Activate{% endif %}
+                        </a>
+                        <a href="{% url 'admin_user_delete' u.id %}" class="btn btn-danger btn-sm">Delete</a>
+                    {% else %}
+                        <span style="font-size: 0.8rem; color: #8892a4;">(Current User)</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 40px 16px; color: #8892a4;">No users found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

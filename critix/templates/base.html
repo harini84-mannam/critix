@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Critix | Discover Your Next Favorite Movie{% endblock %}</title>
+
+    <!-- Open Graph link-preview tags (WhatsApp, X, Slack, etc). Individual pages override the og_tags block. -->
+    {% block og_tags %}
+    <meta property="og:site_name" content="Critix">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Critix | Discover Your Next Favorite Movie">
+    <meta property="og:description" content="Browse, rate and review movies with the Critix community.">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta name="twitter:card" content="summary_large_image">
+    {% endblock %}
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            primary: '#e94560',
+                            secondary: '#5b8dee',
+                            dark: '#0f172a',
+                            surface: '#1e293b',
+                            accent: '#f43f5e',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-up': 'slideUp 0.5s ease-out',
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <script>
+        (function () {
+            const savedTheme = localStorage.getItem('critix-theme');
+            if (savedTheme === 'light') {
+                document.documentElement.classList.add('theme-light');
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        .glass {
+            background-color: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(30, 41, 59, 1);
+        }
+        .btn-premium {
+            padding: 0.625rem 1.5rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-premium:active { transform: scale(0.95); }
+        .btn-primary {
+            background-color: #e94560;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #f43f5e;
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.4);
+        }
+        .btn-secondary {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            border: 1px solid #334155;
+        }
+        .btn-secondary:hover { background-color: #334155; }
+        
+        .card-premium {
+            background-color: #0f172a;
+            border: 0;
+            border-radius: 1rem;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .card-premium:hover {
+            border-color: transparent;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 20px rgba(233, 69, 96, 0.1);
+        }
+        .hero-poster,
+        .movie-poster-frame { border: 0 !important; }
+        
+        .input-premium {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 0.5rem 1rem;
+            transition: all 0.2s;
+        }
+        .input-premium:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(233, 69, 96, 0.5);
+        }
+
+        .scroll-btn {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 9999px;
+            background-color: #e94560;
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 40;
+        }
+        .scroll-btn:hover {
+            transform: scale(1.1);
+            background-color: #f43f5e;
+        }
+        .scroll-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Custom Dropdown Styles */
+        .dropdown-menu {
+            transform-origin: top;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .dropdown-menu.hidden {
+            display: none;
+            opacity: 0;
+            transform: scale(0.95) translateY(-10px);
+        }
+        .dropdown-menu.visible {
+            display: block;
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+        .dropdown-option {
+            padding: 0.625rem 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+        .dropdown-option:hover {
+            background-color: rgba(233, 69, 96, 0.1);
+            color: white;
+        }
+        .dropdown-option.active {
+            background-color: #e94560;
+            color: white;
+        }
+
+        /* ── LIGHT THEME ── */
+        html.theme-light body {
+            background: #f8fafc;
+            color: #0f172a;
+        }
+        html.theme-light .glass {
+            background-color: rgba(255, 255, 255, 0.86);
+            border-color: #e2e8f0;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+        }
+        html.theme-light .card-premium {
+            background-color: #ffffff;
+            border: 0;
+            box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08);
+        }
+        html.theme-light .card-premium h2,
+        html.theme-light .card-premium h3,
+        html.theme-light .card-premium h4,
+        html.theme-light .card-premium [class*="text-white"] {
+            color: #0f172a !important;
+        }
+        html.theme-light .hero-cinematic {
+            background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 55%, #ffffff 100%);
+            box-shadow: 0 24px 70px rgba(15, 23, 42, 0.08);
+            isolation: isolate;
+        }
+        html.theme-light .hero-cinematic .hero-background {
+            opacity: 0.10 !important;
+            filter: blur(24px) saturate(0.8);
+        }
+        html.theme-light .hero-cinematic .hero-overlay {
+            background: transparent !important;
+        }
+        html.theme-light .hero-cinematic .hero-overlay:first-of-type {
+            background: linear-gradient(to bottom, rgba(255,255,255,0.82), rgba(255,255,255,0.26), rgba(255,255,255,0.88)) !important;
+        }
+        html.theme-light .hero-cinematic .hero-overlay:last-of-type {
+            background: linear-gradient(to right, rgba(255,255,255,0.94), rgba(255,255,255,0.28), rgba(255,255,255,0.94)) !important;
+        }
+        html.theme-light .hero-cinematic .hero-title { color: #0f172a !important; text-shadow: none; }
+        html.theme-light .hero-cinematic .hero-description { color: #475569 !important; }
+        html.theme-light .hero-cinematic .hero-poster { border-color: #e2e8f0 !important; box-shadow: 0 30px 70px rgba(15,23,42,0.18); }
+        html.theme-light .hero-cinematic .hero-rating { color: #0f172a !important; }
+        html.theme-light .hero-cinematic .text-white { color: #0f172a !important; }
+        html.theme-light .hero-cinematic .text-slate-300 { color: #475569 !important; }
+        html.theme-light .hero-cinematic .border-slate-800 { border-color: #e2e8f0 !important; }
+        /* Movie detail hero: keep the poster vivid while replacing the dark
+           backdrop wash with a clean light surface in the light theme. */
+        html.theme-light .movie-detail-hero {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 58%, #eef2f7 100%);
+            border-radius: 3rem;
+            box-shadow: 0 24px 70px rgba(15, 23, 42, 0.10);
+            isolation: isolate;
+        }
+        html.theme-light .movie-detail-backdrop {
+            opacity: 0.08 !important;
+            filter: blur(24px) saturate(0.75);
+        }
+        html.theme-light .movie-detail-backdrop-overlay {
+            background: linear-gradient(to bottom, rgba(255,255,255,0.72), rgba(248,250,252,0.96)) !important;
+        }
+        html.theme-light footer {
+            background-color: #ffffff;
+            border-color: #e2e8f0;
+        }
+        html.theme-light [class*="bg-slate-950"] { background-color: #f8fafc !important; }
+        html.theme-light [class*="bg-slate-900"] { background-color: #ffffff !important; }
+        html.theme-light [class*="bg-slate-800"] { background-color: #eef2f7 !important; }
+        html.theme-light [class*="bg-slate-700"] { background-color: #e2e8f0 !important; }
+        /* Keep headings and body copy readable on light surfaces. */
+        html.theme-light [class*="text-white"] { color: #0f172a !important; }
+        html.theme-light [class*="text-slate-200"],
+        html.theme-light [class*="text-slate-300"] { color: #334155 !important; }
+        html.theme-light [class*="text-slate-400"],
+        html.theme-light [class*="text-slate-500"] { color: #64748b !important; }
+        html.theme-light [class*="text-slate-600"] { color: #94a3b8 !important; }
+        html.theme-light [class*="text-slate-700"] { color: #cbd5e1 !important; }
+        html.theme-light [class*="border-slate-900"],
+        html.theme-light [class*="border-slate-800"],
+        html.theme-light [class*="border-slate-700"] { border-color: #e2e8f0 !important; }
+        html.theme-light input,
+        html.theme-light textarea,
+        html.theme-light select { color: #0f172a; background-color: #ffffff; }
+        html.theme-light input::placeholder,
+        html.theme-light textarea::placeholder { color: #94a3b8; }
+        html.theme-light .btn-secondary {
+            background-color: #ffffff;
+            color: #334155;
+            border-color: #cbd5e1;
+        }
+        html.theme-light .btn-secondary:hover { background-color: #f1f5f9; }
+        html.theme-light .btn-primary,
+        html.theme-light .btn-primary [class*="text-white"],
+        html.theme-light .bg-emerald-600,
+        html.theme-light .bg-brand-primary { color: #ffffff !important; }
+        html.theme-light .star-rating label { color: #94a3b8 !important; }
+        html.theme-light .star-rating label:hover,
+        html.theme-light .star-rating label.star-hover,
+        html.theme-light .star-rating input:checked + label,
+        html.theme-light .star-rating input:checked ~ label { color: #d97706 !important; }
+        html.theme-light .dropdown-option { color: #475569; }
+        html.theme-light .dropdown-option:hover { color: #0f172a; }
+        html.theme-light .theme-toggle { background-color: #ffffff; border-color: #e2e8f0; color: #475569; }
+        html.theme-light .theme-toggle:hover { background-color: #f1f5f9; color: #e94560; }
+
+        /* On narrow screens keep the full search field usable instead of
+           letting the optional desktop filter pills cover its text. */
+        @media (max-width: 639px) {
+            .nav-filter-pills { display: none; }
+            #navQ { padding-right: 1rem; }
+        }
+
+        /* ── GLOBAL PREMIUM SCROLLBAR ── */
+        html {
+            scrollbar-width: thin;
+            scrollbar-color: #475569 #070b1a;
+        }
+        html.theme-light {
+            scrollbar-color: #94a3b8 #f1f5f9;
+        }
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #070b1a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #64748b, #334155);
+            border: 2px solid #070b1a;
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #f43f5e, #e94560);
+        }
+        html.theme-light ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        html.theme-light ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #cbd5e1, #94a3b8);
+            border-color: #f1f5f9;
+        }
+        html.theme-light ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #fb7185, #e94560);
+        }
+
+        .theme-toggle .theme-moon { display: none; }
+        html.theme-light .theme-toggle .theme-sun { display: none; }
+        html.theme-light .theme-toggle .theme-moon { display: block; }
+
+        /* ── Lazy-load shimmer ── */
+        img[loading="lazy"] {
+            background: linear-gradient(100deg, #1e293b 30%, #334155 50%, #1e293b 70%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s ease-in-out infinite;
+        }
+        img[loading="lazy"].img-loaded {
+            animation: none;
+            background: none;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        html.theme-light img[loading="lazy"] {
+            background: linear-gradient(100deg, #e2e8f0 30%, #f1f5f9 50%, #e2e8f0 70%);
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-slate-950 text-slate-200 antialiased min-h-screen flex flex-col">
+
+    <!-- ── NAVBAR ── -->
+    <nav class="sticky top-0 z-50 glass border-b border-slate-800/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-wrap items-center justify-between gap-3 py-3 lg:h-20">
+                <!-- Logo -->
+                <div class="flex-shrink-0 flex items-center">
+                    <a href="{% url 'home' %}" class="text-2xl font-bold bg-gradient-to-r from-brand-primary to-rose-400 bg-clip-text text-transparent flex items-center gap-2">
+                        <i data-lucide="clapperboard" class="text-brand-primary"></i>
+                        Critix
+                    </a>
+                </div>
+
+                <!-- Desktop Search -->
+                <div class="order-3 flex basis-full min-w-0 flex-1 lg:order-none lg:basis-0 lg:max-w-2xl lg:mx-8">
+                    {% block navbar_search %}
+                    <form class="w-full relative group" id="navSearchForm" method="GET" action="{% url 'movie_list' %}">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i data-lucide="search" class="w-5 h-5 text-slate-500 group-focus-within:text-brand-primary transition-colors"></i>
+                        </div>
+                        <input type="text" name="q" id="navQ" value="{{ request.GET.q }}"
+                               class="w-full bg-slate-800/50 border border-slate-700/50 rounded-2xl py-2.5 pl-12 pr-4 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:bg-slate-800 transition-all"
+                               placeholder="Search for movies, actors, directors..." autocomplete="off">
+                        
+                        <!-- Filter Pill Group -->
+                        <div class="nav-filter-pills absolute inset-y-0 right-0 flex items-center pr-2 gap-1.5">
+                            <!-- Custom Genre Dropdown -->
+                            <div class="relative custom-dropdown" id="genreDropdownContainer">
+                                <button type="button" onclick="toggleCustomDropdown('genreDropdown')" 
+                                        class="flex items-center gap-2 bg-slate-700/50 text-xs text-slate-300 rounded-xl pl-3 pr-2 py-1.5 hover:bg-slate-700 transition-all border border-transparent hover:border-slate-600">
+                                    <span id="genreLabel">{% if request.GET.genre %}{{ request.GET.genre }}{% else %}All Genres{% endif %}</span>
+                                    <i data-lucide="chevron-down" class="w-3 h-3 text-slate-500"></i>
+                                </button>
+                                <div id="genreDropdown" class="dropdown-menu hidden absolute right-0 mt-2 w-48 glass rounded-2xl shadow-2xl p-1.5 z-50">
+                                    <div class="max-h-64 overflow-y-auto custom-scrollbar">
+                                        <div onclick="selectOption('genre', '', 'All Genres')" class="dropdown-option {% if not request.GET.genre %}active{% endif %}">All Genres</div>
+                                        {% for g in all_genres %}
+                                        <div onclick="selectOption('genre', '{{ g }}', '{{ g }}')" class="dropdown-option {% if request.GET.genre == g %}active{% endif %}">{{ g }}</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <input type="hidden" name="genre" id="navGenre" value="{{ request.GET.genre }}">
+                            </div>
+
+                            <!-- Custom Sort Dropdown -->
+                            <div class="relative custom-dropdown" id="sortDropdownContainer">
+                                <button type="button" onclick="toggleCustomDropdown('sortDropdown')" 
+                                        class="flex items-center gap-2 bg-slate-700/50 text-xs text-slate-300 rounded-xl pl-3 pr-2 py-1.5 hover:bg-slate-700 transition-all border border-transparent hover:border-slate-600">
+                                    <span id="sortLabel">
+                                        {% if request.GET.sort == 'newest' %}Newest
+                                        {% elif request.GET.sort == 'oldest' %}Oldest
+                                        {% elif request.GET.sort == 'rating' %}Top Rated
+                                        {% elif request.GET.sort == 'az' %}A–Z
+                                        {% elif request.GET.sort == 'za' %}Z–A
+                                        {% else %}Sort{% endif %}
+                                    </span>
+                                    <i data-lucide="chevron-down" class="w-3 h-3 text-slate-500"></i>
+                                </button>
+                                <div id="sortDropdown" class="dropdown-menu hidden absolute right-0 mt-2 w-40 glass rounded-2xl shadow-2xl p-1.5 z-50">
+                                    <div onclick="selectOption('sort', '', 'Sort')" class="dropdown-option {% if not request.GET.sort %}active{% endif %}">Default</div>
+                                    <div onclick="selectOption('sort', 'newest', 'Newest')" class="dropdown-option {% if request.GET.sort == 'newest' %}active{% endif %}">Newest</div>
+                                    <div onclick="selectOption('sort', 'oldest', 'Oldest')" class="dropdown-option {% if request.GET.sort == 'oldest' %}active{% endif %}">Oldest</div>
+                                    <div onclick="selectOption('sort', 'rating', 'Top Rated')" class="dropdown-option {% if request.GET.sort == 'rating' %}active{% endif %}">Top Rated</div>
+                                    <div onclick="selectOption('sort', 'az', 'A–Z')" class="dropdown-option {% if request.GET.sort == 'az' %}active{% endif %}">A–Z</div>
+                                    <div onclick="selectOption('sort', 'za', 'Z–A')" class="dropdown-option {% if request.GET.sort == 'za' %}active{% endif %}">Z–A</div>
+                                </div>
+                                <input type="hidden" name="sort" id="navSort" value="{{ request.GET.sort }}">
+                            </div>
+                        </div>
+                    </form>
+                    {% endblock %}
+                </div>
+
+                <!-- Right Side Actions -->
+                <div class="ml-auto flex items-center gap-3 sm:gap-4">
+                    <button id="themeToggle" type="button" onclick="toggleTheme()" class="theme-toggle w-10 h-10 rounded-xl border border-slate-700/50 bg-slate-800/50 text-slate-300 hover:text-brand-primary transition-all flex items-center justify-center" aria-label="Switch to light mode" title="Switch theme">
+                        <i data-lucide="sun" class="theme-sun w-4 h-4"></i>
+                        <i data-lucide="moon" class="theme-moon w-4 h-4"></i>
+                    </button>
+                    {% if user.is_authenticated %}
+                        <!-- Notification Bell -->
+                        <div class="relative" id="notificationDropdownContainer">
+                            <button id="notificationBellBtn" type="button" class="relative w-10 h-10 rounded-xl border border-slate-700/50 bg-slate-800/50 text-slate-300 hover:text-brand-primary transition-all flex items-center justify-center" aria-label="Notifications" title="Notifications">
+                                <i data-lucide="bell" class="w-4 h-4"></i>
+                                {% if navbar_unread_notification_count %}
+                                <span id="notificationBadge" class="absolute -top-1.5 -right-1.5 bg-brand-primary text-[10px] font-bold px-1.5 py-0.5 rounded-full ring-2 ring-slate-900">{{ navbar_unread_notification_count }}</span>
+                                {% endif %}
+                            </button>
+                            <div id="notificationDropdown" class="hidden absolute right-0 mt-3 w-80 glass rounded-2xl shadow-2xl py-2 overflow-hidden animate-slide-up z-50">
+                                <div class="px-4 py-3 border-b border-slate-800/50 flex items-center justify-between gap-3">
+                                    <p class="text-sm font-bold text-white">Notifications</p>
+                                    {% if navbar_notifications %}
+                                    <form method="post" action="{% url 'clear_notifications' %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:text-rose-400 transition-colors" title="Delete all notifications">
+                                            Clear all
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                                <div class="max-h-80 overflow-y-auto custom-scrollbar">
+                                    {% for notif in navbar_notifications %}
+                                    <div class="px-4 py-3 border-b border-slate-800/30 last:border-0 {% if not notif.is_read %}bg-brand-primary/5{% endif %}">
+                                        <p class="text-sm text-slate-300 leading-snug">{{ notif.message }}</p>
+                                        <p class="text-[10px] text-slate-500 mt-1 uppercase font-bold">{{ notif.created_at|timesince }} ago</p>
+                                    </div>
+                                    {% empty %}
+                                    <p class="px-4 py-6 text-sm text-slate-500 text-center italic">You're all caught up.</p>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <a href="{% url 'watchlist_list' %}" class="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">
+                            <div class="relative">
+                                <i data-lucide="heart" class="w-6 h-6"></i>
+                                {% if navbar_watchlist_count %}
+                                <span class="absolute -top-2 -right-2 bg-brand-primary text-[10px] font-bold px-1.5 py-0.5 rounded-full ring-2 ring-slate-900">{{ navbar_watchlist_count }}</span>
+                                {% endif %}
+                            </div>
+                            <span class="hidden sm:inline text-sm font-medium">Watchlist</span>
+                        </a>
+
+                        <!-- Profile Dropdown -->
+                        <div class="relative" id="profileDropdownContainer">
+                            <button onclick="toggleProfileDropdown()" class="flex items-center gap-2 p-1 rounded-full hover:bg-slate-800 transition-all border border-transparent hover:border-slate-700">
+                                <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-brand-primary to-rose-500 flex items-center justify-center text-white font-bold shadow-lg">
+                                    {{ user.username.0|upper }}
+                                </div>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-hover:text-white transition-colors"></i>
+                            </button>
+                            
+                            <div id="profileDropdown" class="hidden absolute right-0 mt-3 w-64 glass rounded-2xl shadow-2xl py-2 overflow-hidden animate-slide-up">
+                                <div class="px-4 py-3 border-b border-slate-800/50">
+                                    <p class="text-sm font-semibold text-white">{{ user.username }}</p>
+                                    <p class="text-xs text-slate-400 truncate">{{ user.email }}</p>
+                                </div>
+                                <a href="{% url 'user_profile' %}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                                    <i data-lucide="user" class="w-4 h-4"></i> Profile Dashboard
+                                </a>
+                                <a href="{% url 'watched_list' %}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                                    <i data-lucide="eye" class="w-4 h-4"></i> Watched History
+                                </a>
+                                <div class="border-t border-slate-800/50 my-1"></div>
+                                <a href="{% url 'logout' %}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-rose-400 hover:bg-rose-500/10 transition-colors">
+                                    <i data-lucide="log-out" class="w-4 h-4"></i> Logout
+                                </a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="flex items-center gap-3">
+                            <a href="{% url 'login' %}" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors px-2 sm:px-4">Login</a>
+                            <a href="{% url 'register' %}" class="btn-premium btn-primary text-sm">Sign Up</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ── MAIN CONTENT ── -->
+    <main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% if user.is_authenticated %}
+    <div id="global-csrf-token-data" data-token="{{ csrf_token }}" class="hidden"></div>
+    {% endif %}
+
+    <!-- ── FOOTER ── -->
+    <footer class="bg-slate-950 border-t border-slate-900 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-8">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="clapperboard" class="text-brand-primary w-6 h-6"></i>
+                    <span class="text-xl font-bold text-white">Critix</span>
+                </div>
+            </div>
+            <div class="mt-8 pt-8 border-t border-slate-900 text-center text-xs text-slate-600">
+                &copy; 2026 Critix Movie Reviews. All rights reserved. Designed with ❤️ for movie lovers.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scroll Buttons Container -->
+    <div class="fixed bottom-8 right-8 flex flex-col gap-3 z-40">
+        <button id="scrollTopBtn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" 
+                class="scroll-btn scale-0 opacity-0 invisible transition-all duration-300" title="Scroll to Top">
+            <i data-lucide="arrow-up" class="w-6 h-6"></i>
+        </button>
+        <button id="scrollBottomBtn" onclick="window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'})" 
+                class="scroll-btn transition-all duration-300" title="Scroll to Bottom">
+            <i data-lucide="arrow-down" class="w-6 h-6"></i>
+        </button>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Persistent Light/Dark Theme
+        function syncThemeToggle() {
+            const isLight = document.documentElement.classList.contains('theme-light');
+            const toggle = document.getElementById('themeToggle');
+            if (toggle) {
+                toggle.setAttribute('aria-label', isLight ? 'Switch to dark mode' : 'Switch to light mode');
+                toggle.setAttribute('title', isLight ? 'Switch to dark mode' : 'Switch to light mode');
+            }
+        }
+
+        function toggleTheme() {
+            const isLight = document.documentElement.classList.toggle('theme-light');
+            document.documentElement.classList.toggle('dark', !isLight);
+            localStorage.setItem('critix-theme', isLight ? 'light' : 'dark');
+            syncThemeToggle();
+        }
+
+        syncThemeToggle();
+
+        // Custom Dropdown Logic
+        function toggleCustomDropdown(id) {
+            const dropdown = document.getElementById(id);
+            const isHidden = dropdown.classList.contains('hidden');
+            
+            // Close all other dropdowns first
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                if (menu.id !== id && menu.id !== 'profileDropdown') {
+                    menu.classList.add('hidden');
+                    menu.classList.remove('visible');
+                }
+            });
+
+            if (isHidden) {
+                dropdown.classList.remove('hidden');
+                setTimeout(() => dropdown.classList.add('visible'), 10);
+            } else {
+                dropdown.classList.remove('visible');
+                setTimeout(() => dropdown.classList.add('hidden'), 200);
+            }
+        }
+
+        function selectOption(type, value, label) {
+            const input = document.getElementById('nav' + type.charAt(0).toUpperCase() + type.slice(1));
+            const labelSpan = document.getElementById(type + 'Label');
+            const form = document.getElementById('navSearchForm');
+
+            input.value = value;
+            labelSpan.innerText = label;
+            
+            // Highlight active option
+            const dropdown = document.getElementById(type + 'Dropdown');
+            dropdown.querySelectorAll('.dropdown-option').forEach(opt => {
+                if (opt.innerText === label) opt.classList.add('active');
+                else opt.classList.remove('active');
+            });
+
+            // Close dropdown
+            toggleCustomDropdown(type + 'Dropdown');
+            
+            // Submit form
+            form.submit();
+        }
+
+        // Profile dropdown toggle
+        function toggleProfileDropdown() {
+            const dropdown = document.getElementById('profileDropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        // Close dropdowns when clicking outside
+        window.addEventListener('click', function(e) {
+            // Profile dropdown
+            const profileContainer = document.getElementById('profileDropdownContainer');
+            const profileDropdown = document.getElementById('profileDropdown');
+            if (profileContainer && !profileContainer.contains(e.target)) {
+                profileDropdown.classList.add('hidden');
+            }
+
+            // Custom dropdowns
+            if (!e.target.closest('.custom-dropdown')) {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    if (menu.id !== 'profileDropdown') {
+                        menu.classList.add('hidden');
+                        menu.classList.remove('visible');
+                    }
+                });
+            }
+        });
+
+        // Dynamic Scroll Buttons Logic
+        window.addEventListener('scroll', () => {
+            const btnUp = document.getElementById('scrollTopBtn');
+            const btnDown = document.getElementById('scrollBottomBtn');
+            const scrollY = window.scrollY;
+            const windowHeight = window.innerHeight;
+            const fullHeight = document.documentElement.scrollHeight;
+            
+            if (scrollY > 300) {
+                btnUp.classList.remove('scale-0', 'opacity-0', 'invisible');
+                btnUp.classList.add('scale-100', 'opacity-100', 'visible');
+            } else {
+                btnUp.classList.add('scale-0', 'opacity-0', 'invisible');
+                btnUp.classList.remove('scale-100', 'opacity-100', 'visible');
+            }
+            
+            if (scrollY + windowHeight < fullHeight - 100) {
+                btnDown.classList.remove('scale-0', 'opacity-0', 'invisible');
+                btnDown.classList.add('scale-100', 'opacity-100', 'visible');
+            } else {
+                btnDown.classList.add('scale-0', 'opacity-0', 'invisible');
+                btnDown.classList.remove('scale-100', 'opacity-100', 'visible');
+            }
+        });
+
+        window.dispatchEvent(new Event('scroll'));
+
+        // Auto-submit search form with debounce
+        (function () {
+            const form = document.getElementById('navSearchForm');
+            const input = document.getElementById('navQ');
+            if (!form) return;
+            let timer;
+            if (input) {
+                input.addEventListener('input', () => {
+                    clearTimeout(timer);
+                    timer = setTimeout(() => form.submit(), 600);
+                });
+            }
+        })();
+
+        // Stop the shimmer on lazy-loaded images once they've actually loaded
+        (function () {
+            function markLoaded(img) { img.classList.add('img-loaded'); }
+            document.querySelectorAll('img[loading="lazy"]').forEach(img => {
+                if (img.complete) markLoaded(img);
+                else img.addEventListener('load', () => markLoaded(img), { once: true });
+                img.addEventListener('error', () => markLoaded(img), { once: true });
+            });
+        })();
+
+        // Bar widths (rating breakdown, favourite genres) come in as data-width so no template tag sits inside CSS
+        document.querySelectorAll('[data-width]').forEach(el => { el.style.width = el.dataset.width + '%'; });
+
+        // Notification bell dropdown
+        (function () {
+            const container = document.getElementById('notificationDropdownContainer');
+            const dropdown = document.getElementById('notificationDropdown');
+            const btn = document.getElementById('notificationBellBtn');
+            const badge = document.getElementById('notificationBadge');
+            const csrfData = document.getElementById('global-csrf-token-data');
+            if (!container || !dropdown || !btn) return;
+
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                const isHidden = dropdown.classList.contains('hidden');
+                dropdown.classList.toggle('hidden');
+                if (isHidden && badge && csrfData) {
+                    const csrfToken = csrfData.getAttribute('data-token');
+                    fetch('/notifications/mark-read/', {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': csrfToken }
+                    }).then(() => badge.remove()).catch(() => {});
+                }
+            });
+            window.addEventListener('click', function (e) {
+                if (!container.contains(e.target)) dropdown.classList.add('hidden');
+            });
+        })();
+    </script>
+</body>
+</html>

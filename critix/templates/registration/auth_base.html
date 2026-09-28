@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Critix{% endblock %} | Critix</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { primary: '#e94560', accent: '#f43f5e' }
+                    }
+                }
+            }
+        }
+    </script>
+    <script>
+        (function () {
+            if (localStorage.getItem('critix-theme') === 'light') {
+                document.documentElement.classList.add('theme-light');
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
+    <style>
+        html.theme-light body { background: #f8fafc; color: #0f172a; }
+        html.theme-light .auth-card { background: rgba(255,255,255,0.88); border-color: #e2e8f0; box-shadow: 0 24px 70px rgba(15,23,42,0.10); }
+        html.theme-light .auth-title { color: #0f172a !important; }
+        html.theme-light .auth-input { background: #ffffff; color: #0f172a; border-color: #cbd5e1; }
+        html.theme-light .auth-input::placeholder { color: #94a3b8; }
+        html.theme-light .auth-divider { border-color: #e2e8f0; }
+        html.theme-light .auth-muted { color: #64748b !important; }
+        html.theme-light .theme-toggle { background: #ffffff; border-color: #e2e8f0; color: #475569; }
+        html.theme-light .theme-toggle .theme-sun { display: none; }
+        html.theme-light .theme-toggle .theme-moon { display: block; }
+        .theme-toggle .theme-moon { display: none; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200 min-h-screen flex items-center justify-center p-4 overflow-x-hidden relative">
+    <button type="button" onclick="toggleStandaloneTheme()" class="theme-toggle absolute top-5 right-5 z-20 w-10 h-10 rounded-xl border border-slate-700/50 bg-slate-900/60 text-slate-300 flex items-center justify-center transition-all" aria-label="Switch to light mode" title="Switch theme">
+        <i data-lucide="sun" class="theme-sun w-4 h-4"></i>
+        <i data-lucide="moon" class="theme-moon w-4 h-4"></i>
+    </button>
+
+    <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-brand-primary/10 blur-[120px] rounded-full"></div>
+    <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/10 blur-[120px] rounded-full"></div>
+
+    <div class="w-full max-w-md space-y-8 relative z-10 py-8">
+        <div class="text-center">
+            <a href="/" class="inline-flex items-center gap-2 text-3xl font-black bg-gradient-to-r from-brand-primary to-rose-400 bg-clip-text text-transparent">
+                <i data-lucide="clapperboard" class="text-brand-primary w-8 h-8"></i>
+                Critix
+            </a>
+            <h2 class="auth-title mt-6 text-3xl font-extrabold text-white">{% block heading %}{% endblock %}</h2>
+            <p class="auth-muted mt-2 text-sm text-slate-400">{% block subheading %}{% endblock %}</p>
+        </div>
+
+        <div class="auth-card bg-slate-900/50 backdrop-blur-xl border border-slate-800 p-8 rounded-[2.5rem] shadow-2xl shadow-black/50">
+            {% block card %}{% endblock %}
+        </div>
+    </div>
+
+    <script>
+        function toggleStandaloneTheme() {
+            const isLight = document.documentElement.classList.toggle('theme-light');
+            document.documentElement.classList.toggle('dark', !isLight);
+            localStorage.setItem('critix-theme', isLight ? 'light' : 'dark');
+            const button = document.querySelector('.theme-toggle');
+            if (button) button.setAttribute('aria-label', isLight ? 'Switch to dark mode' : 'Switch to light mode');
+        }
+        // Show / hide password (eye icon)
+        document.querySelectorAll('.toggle-password').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const input = btn.parentElement.querySelector('input');
+                const show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                btn.querySelector('.eye-show').classList.toggle('hidden', show);
+                btn.querySelector('.eye-hide').classList.toggle('hidden', !show);
+                btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+            });
+        });
+        lucide.createIcons();
+    </script>
+</body>
+</html>

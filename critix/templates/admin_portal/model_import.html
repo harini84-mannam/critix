@@ -1,0 +1,112 @@
+{% extends 'admin_portal/base.html' %}
+
+{% block page_title %}Import {{ verbose_name_pl }}{% endblock %}
+{% block breadcrumb %}Admin / <a href="{% url 'admin_model_list' model_name %}" class="hover:text-brand-primary transition-colors">{{ verbose_name_pl }}</a> / Import{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-8">
+    
+    <!-- ── HEADER ── -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-3xl font-black text-white">Import {{ verbose_name_pl }}</h2>
+            <p class="text-sm text-slate-500 font-bold uppercase tracking-widest mt-1">Bulk Data Upload</p>
+        </div>
+        <a href="{% url 'admin_model_list' model_name %}" class="btn-premium btn-secondary">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            Back to List
+        </a>
+    </div>
+
+    {% if parse_error %}
+    <div class="p-6 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 space-y-2">
+        <div class="flex items-center gap-2 font-black text-xs uppercase tracking-widest">
+            <i data-lucide="alert-circle" class="w-4 h-4"></i>
+            Import Error
+        </div>
+        <p class="text-sm opacity-80">{{ parse_error }}</p>
+    </div>
+    {% endif %}
+
+    <!-- ── IMPORT FORM ── -->
+    <div class="glass p-8 md:p-12 rounded-[3rem] border-slate-800/50 space-y-10 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-brand-primary/5 blur-[80px] rounded-full -z-10"></div>
+        
+        <div class="space-y-6">
+            <div class="w-20 h-20 bg-brand-primary/10 rounded-3xl flex items-center justify-center text-brand-primary">
+                <i data-lucide="upload-cloud" class="w-10 h-10"></i>
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-2xl font-bold text-white">Upload Data File</h3>
+                <p class="text-slate-400 leading-relaxed">Select a CSV or Excel (.xlsx) file containing your records. The first row should contain the field names.</p>
+            </div>
+        </div>
+
+        <form method="POST" action="{% url 'admin_model_import_preview' model_name %}" enctype="multipart/form-data" id="importForm" class="space-y-8">
+            {% csrf_token %}
+            <input type="hidden" name="action" id="actionField" value="preview">
+            
+            <div class="space-y-4">
+                <div class="w-full border-2 border-dashed border-slate-800 rounded-[2rem] p-12 text-center hover:border-brand-primary/50 hover:bg-brand-primary/5 transition-all group cursor-pointer"
+                     id="dropzone"
+                     ondragover="this.style.borderColor='#e94560'; event.preventDefault();"
+                     ondragleave="this.style.borderColor='#1e293b';"
+                     ondrop="handleDrop(event)">
+                    <input type="file" name="import_file" id="fileInput" accept=".csv,.xlsx,.xls" class="hidden" onchange="showFileName(this)">
+                    <div class="space-y-4" onclick="document.getElementById('fileInput').click()">
+                        <div class="w-12 h-12 bg-slate-900 rounded-full flex items-center justify-center mx-auto text-slate-600 group-hover:text-brand-primary transition-colors">
+                            <i data-lucide="file-plus" class="w-6 h-6"></i>
+                        </div>
+                        <div class="space-y-1">
+                            <p class="text-white font-bold" id="fileName">Click to select or drag and drop</p>
+                            <p class="text-xs text-slate-500 uppercase font-black tracking-widest">CSV or XLSX up to 10MB</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-4 flex flex-col sm:flex-row gap-4">
+                <button type="button" onclick="submitWith('preview')" class="btn-premium btn-primary flex-1 justify-center py-4">
+                    <i data-lucide="zap" class="w-5 h-5"></i>
+                    Preview & Confirm
+                </button>
+                <a href="{% url 'admin_model_export' model_name %}?fmt=csv" class="btn-premium btn-secondary flex-1 justify-center py-4">
+                    <i data-lucide="download" class="w-5 h-5"></i>
+                    Download Template
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function showFileName(input) {
+    const el = document.getElementById('fileName');
+    el.textContent = input.files[0] ? input.files[0].name : 'Click to select or drag and drop';
+    if (input.files[0]) el.classList.add('text-brand-primary');
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('dropzone').style.borderColor = '#1e293b';
+    const file = e.dataTransfer.files[0];
+    if (file) {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        document.getElementById('fileInput').files = dt.files;
+        document.getElementById('fileName').textContent = file.name;
+        document.getElementById('fileName').classList.add('text-brand-primary');
+    }
+}
+
+function submitWith(action) {
+    const fileInput = document.getElementById('fileInput');
+    if (!fileInput.files.length) {
+        alert('Please select a file first.');
+        return;
+    }
+    document.getElementById('actionField').value = action;
+    document.getElementById('importForm').submit();
+}
+</script>
+{% endblock %}
