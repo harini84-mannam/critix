@@ -166,8 +166,7 @@ def home(request):
     ).order_by('-review_count')[:4]
 
 # upcoming Telugu releases, kept fresh by `sync_upcoming_releases` (run manually or via a weekly cron job)
-    upcoming_releases = UpcomingRelease.objects.filter(release_date__gte=date.today())[:8]
-
+    upcoming_releases = UpcomingRelease.objects.filter(release_date__gt=date.today())[:8]
     return render(request, 'home.html', {
         'movie_of_day': movie_of_day,
         'top_movies': top_movies,
