@@ -166,7 +166,8 @@ def home(request):
     ).order_by('-review_count')[:4]
 
 # upcoming Telugu releases, kept fresh by `sync_upcoming_releases` (run manually or via a weekly cron job)
-    upcoming_releases = UpcomingRelease.objects.filter(release_date__gt=date.today())[:8]
+    upcoming_releases = UpcomingRelease.objects.filter(release_date__gt=date.today())[:12]
+
     return render(request, 'home.html', {
         'movie_of_day': movie_of_day,
         'top_movies': top_movies,
@@ -204,8 +205,8 @@ def movie_list(request):
         except ValueError:
             pass
     # every sort ends with id, so ties always come back in the same order and pages never overlap
-        if sort == 'newest':
-            movies_queryset = movies_queryset.order_by('-release_year', F('release_date').desc(nulls_last=True), '-id')
+    if sort == 'newest':
+        movies_queryset = movies_queryset.order_by('-release_year', F('release_date').desc(nulls_last=True), '-id')
     elif sort == 'oldest':
         movies_queryset = movies_queryset.order_by('release_year', F('release_date').asc(nulls_last=True), 'id')
     elif sort == 'az':
