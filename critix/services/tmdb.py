@@ -431,7 +431,12 @@ def fetch_trailer_url(tmdb_id: int) -> str:
     trailer = _pick_trailer((details or {}).get("videos"))
     return f"https://www.youtube.com/watch?v={trailer['key']}" if trailer else ""
 
-
+def _parse_date(value):
+    """TMDB sends release dates as 'YYYY-MM-DD'; return a date or None."""
+    try:
+        return date.fromisoformat(value) if value else None
+    except ValueError:
+        return None
 def _discover(year: int, page: int, min_votes: int, original_language: str):
     return _get_json(
         "/discover/movie",
@@ -534,6 +539,7 @@ def import_movie(
             genre=_genre_string(details),
             description=(details.get("overview") or "").strip(),
             release_year=year,
+            release_date=_parse_date(details.get("release_date")),
             tmdb_id=tmdb_id,
         )
         if poster:
