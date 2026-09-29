@@ -184,3 +184,5 @@ TMDB_WATCH_REGION = os.environ.get('TMDB_WATCH_REGION', 'IN')
 STATICFILES_DIRS = [
     BASE_DIR / 'critix' / 'static',
 ]
+
+WHITENOISE_USE_FINDERS = True
