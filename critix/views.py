@@ -10,7 +10,7 @@ from .models import (
 
 from .forms import SignUpForm, ReviewForm
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Avg, Q
+from django.db.models import Count, Avg, Q, Min, F
 from django.db.models.functions import Lower
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.cache import cache
@@ -182,8 +182,14 @@ def movie_list(request):
     sort = request.GET.get('sort', '')
 
 # calculates avg rating for every movie
-    movies_queryset = Movie.objects.annotate(avg_rating=Avg('reviews__rating'))
-
+    # one row per movie (same title + year keeps the lowest id), applied before filters and pagination
+    first_ids = (
+        Movie.objects.annotate(t=Lower('title'))
+        .values('t', 'release_year')
+        .annotate(first_id=Min('id'))
+        .values('first_id')
+    )
+    movies_queryset = Movie.objects.filter(id__in=first_ids).annotate(avg_rating=Avg('reviews__rating'))
 # this searches by title OR by a cast member's name, so "Mahesh Babu" finds his films too
     if query:
         movies_queryset = movies_queryset.filter(
@@ -197,20 +203,20 @@ def movie_list(request):
             movies_queryset = movies_queryset.filter(release_year__gte=decade_start, release_year__lte=decade_start + 9)
         except ValueError:
             pass
-# this filters by genres
+    # every sort ends with id, so ties always come back in the same order and pages never overlap
     if sort == 'newest':
-        movies_queryset = movies_queryset.order_by('-release_year')
+        movies_queryset = movies_queryset.order_by('-release_year', '-id')
     elif sort == 'oldest':
-        movies_queryset = movies_queryset.order_by('release_year')
+        movies_queryset = movies_queryset.order_by('release_year', 'id')
     elif sort == 'az':
-        movies_queryset = movies_queryset.annotate(lower_title=Lower('title')).order_by('lower_title')
+        movies_queryset = movies_queryset.annotate(lower_title=Lower('title')).order_by('lower_title', 'id')
     elif sort == 'za':
-        movies_queryset = movies_queryset.annotate(lower_title=Lower('title')).order_by('-lower_title')
+        movies_queryset = movies_queryset.annotate(lower_title=Lower('title')).order_by('-lower_title', '-id')
     elif sort == 'rating':
-        movies_queryset = movies_queryset.order_by('-avg_rating')
+        movies_queryset = movies_queryset.order_by(F('avg_rating').desc(nulls_last=True), '-id')
     else:
         movies_queryset = movies_queryset.order_by('-id')
-
+        
 # this keeps the search filters while we change the pages too
     query_params = request.GET.copy()
     if 'page' in query_params:
