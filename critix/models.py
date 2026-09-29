@@ -8,6 +8,7 @@ class Movie(models.Model):
     genre = models.CharField(max_length=100)
     description = models.TextField()
     release_year = models.IntegerField()
+    release_date = models.DateField(null=True, blank=True, editable=False)
     # Filled automatically by the backend TMDB enrichment service; hidden
     # from the existing generic admin form so the UI remains unchanged.
     tmdb_id = models.PositiveIntegerField(null=True, blank=True, unique=True, editable=False)

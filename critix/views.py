@@ -204,10 +204,10 @@ def movie_list(request):
         except ValueError:
             pass
     # every sort ends with id, so ties always come back in the same order and pages never overlap
-    if sort == 'newest':
-        movies_queryset = movies_queryset.order_by('-release_year', '-id')
+        if sort == 'newest':
+            movies_queryset = movies_queryset.order_by('-release_year', F('release_date').desc(nulls_last=True), '-id')
     elif sort == 'oldest':
-        movies_queryset = movies_queryset.order_by('release_year', 'id')
+        movies_queryset = movies_queryset.order_by('release_year', F('release_date').asc(nulls_last=True), 'id')
     elif sort == 'az':
         movies_queryset = movies_queryset.annotate(lower_title=Lower('title')).order_by('lower_title', 'id')
     elif sort == 'za':
@@ -216,7 +216,7 @@ def movie_list(request):
         movies_queryset = movies_queryset.order_by(F('avg_rating').desc(nulls_last=True), '-id')
     else:
         movies_queryset = movies_queryset.order_by('-id')
-        
+
 # this keeps the search filters while we change the pages too
     query_params = request.GET.copy()
     if 'page' in query_params:
