@@ -1,277 +1,123 @@
-# 🎬 Critix - Movie Review Platform
+# 🎬 Critix: Movie Review & Community Platform
 
-Critix is a web-based movie review application that allows users to explore movies, view posters, and manage movie reviews through an interactive interface.
+Critix is a full-stack movie review platform built with Django. Users can discover movies, rate and review them, join threaded discussions, and keep watchlists, while a custom-built admin portal gives staff full control over content and moderation.
 
-Built using **Python Django**, Critix provides a structured platform for storing movie information, displaying visual content, and managing user-focused movie reviews.
+### 🔗 [Live Demo: critix-review.vercel.app](https://critix-review.vercel.app/)
+
+![Django](https://img.shields.io/badge/Django-092E20?style=flat-square&logo=django&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black)
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat-square&logo=vercel&logoColor=white)
 
 ---
 
 ## ✨ Features
 
-### 🎥 Movie Management
+### 🍿 For Movie Lovers
+- **Browse and discover** movies with posters, details and cast information
+- **Filter by genre** (Action, Comedy, Drama, Thriller, Romance and more) and **sort** by Newest, Oldest, Top Rated, A-Z or Z-A
+- **Movie of the Day** spotlight, plus **Trending Now** and **Coming Soon** sections for upcoming releases with trailer links
+- **Rate and review** movies
+- **Like reviews** and reply to them in **threaded conversations**
+- **Watchlist** for movies you want to see and **Watched** list for ones you have seen
+- **In-app notifications** about activity on your reviews
+- **Report** inappropriate reviews
 
-- Browse available movies
-- View movie details
-- Display movie posters
-- Store movie information efficiently
+### 🛡️ Custom Admin Portal
+A complete admin system built from scratch, instead of relying only on Django's default admin:
 
-### ⭐ Review System
-
-- Add and manage movie reviews
-- View audience opinions
-- Maintain organized review data
-
-### 🖼️ Media Support
-
-- Upload and display movie posters
-- Manage static and media files using Django
-
-### 🛠️ Django Powered
-
-- MVC/MVT architecture
-- SQLite database integration
-- Template-based frontend rendering
-- Easy local deployment
+- **Dashboard** with an overview of the platform
+- **Management screens** for movies, reviews, users and genres
+- **Moderation** of reported reviews, with a history of report actions
+- **Staff access control** to limit who can do what
+- **Auto-discovering sidebar** that picks up newly added models automatically, so navigation links don't need to be hardcoded
+- **Metadata-driven dynamic views** with list filtering and sorting
+- **CSV / Excel import and export**, with foreign-key resolution on import
+- **Bulk actions**, plus import and delete confirmation pages
+- Admin notifications
 
 ---
 
-# 🚀 Getting Started
+## 🧰 Tech Stack
 
-Follow these steps to run Critix locally.
-
-## Prerequisites
-
-Make sure you have:
-
-- Python 3.8+
-- pip
-- Virtual environment (recommended)
+| Layer | Technology |
+|---|---|
+| Backend | Python, Django |
+| Database | PostgreSQL (Neon) |
+| Frontend | HTML, CSS, JavaScript, Django templates |
+| Movie data and posters | TMDB |
+| Hosting | Vercel |
 
 ---
 
-## 📥 Clone Repository
+## 🚀 Getting Started
+
+### Prerequisites
+- Python 3.9+
+- PostgreSQL (or SQLite for local development)
+
+### Installation
 
 ```bash
-git clone https://github.com/harini84-mannam/critix.git
+# Clone the repository
+git clone https://github.com/harini84-mannam/<repo-name>.git
+cd <repo-name>
 
-cd critix
-```
-
----
-
-## 🐍 Create Virtual Environment
-
-### Windows
-
-```bash
+# Create and activate a virtual environment
 python -m venv venv
+source venv/bin/activate        # On Windows: venv\Scripts\activate
 
-venv\Scripts\activate
-```
-
-### Linux / macOS
-
-```bash
-python3 -m venv venv
-
-source venv/bin/activate
-```
-
----
-
-## 📦 Install Dependencies
-
-Install required packages:
-
-```bash
+# Install dependencies
 pip install -r requirements.txt
-```
 
-If requirements file is not available:
+# Configure environment variables (see below)
 
-```bash
-pip install django
-```
-
----
-
-# ⚙️ Database Setup
-
-Apply migrations:
-
-```bash
-python manage.py makemigrations
-
+# Apply migrations and create an admin user
 python manage.py migrate
-```
-
----
-
-# 👤 Create Admin Account
-
-Create a Django admin user:
-
-```bash
 python manage.py createsuperuser
-```
 
-Enter:
-
-- Username
-- Email
-- Password
-
----
-
-# ▶️ Run Application
-
-Start the development server:
-
-```bash
+# Run the development server
 python manage.py runserver
 ```
 
-Open your browser:
+Then open http://127.0.0.1:8000/ in your browser.
 
+### Environment variables
+
+Create a `.env` file (or set these in your hosting dashboard):
+
+```env
+SECRET_KEY=your-django-secret-key
+DEBUG=True
+DATABASE_URL=postgres://user:password@host:5432/dbname
 ```
-http://127.0.0.1:8000/
-```
+
+Add any other keys your project uses, such as a TMDB API key.
 
 ---
 
-# 📁 Project Structure
+## 🌐 Deployment
 
-```
-critix/
-│
-├── manage.py                 # Django project manager
-├── install.py                # Installation helper
-├── db.sqlite3                # SQLite database
-│
-├── movie_review/             # Main Django application
-│
-├── media/
-│   └── posters/              # Movie poster uploads
-│
-├── templates/                # HTML templates
-│
-├── static/                   # CSS, JS, static assets
-│
-└── README.md
-```
+The live site is deployed on **Vercel** with a **Neon PostgreSQL** database.
 
 ---
 
-# 🧰 Technology Stack
+## 📸 Screenshots
 
-## Backend
-
-- Python
-- Django
-
-## Database
-
-- SQLite
-
-## Frontend
-
-- HTML
-- CSS
-- Django Templates
-
-## Media Handling
-
-- Django Media Files
-- Image Upload Management
-
----
-
-# 🔑 Django Features Used
-
-- Models for database management
-- Views for application logic
-- Templates for UI rendering
-- URL routing
-- Static and media file handling
-- Django ORM
-
----
-
-# 📸 Screenshots
-
-Add application screenshots here:
-
-```
-screenshots/
-├── home.png
-├── movie_details.png
-└── reviews.png
-```
-
-Example:
-
+<!-- Add screenshots here, for example:
 ![Home Page](screenshots/home.png)
+![Movie Details and Reviews](screenshots/movie-detail.png)
+![Admin Dashboard](screenshots/admin-dashboard.png)
+-->
 
 ---
 
-# 🔮 Future Enhancements
-
-Possible improvements:
-
-- User authentication
-- Movie ratings system
-- Search functionality
-- Movie recommendations
-- API integration with movie databases
-- User profiles
-- Comments and discussions
-- Dark mode UI
-
----
-
-# 🤝 Contributing
-
-Contributions are welcome!
-
-Steps:
-
-1. Fork this repository
-
-2. Create a new branch:
-
-```bash
-git checkout -b feature-name
-```
-
-3. Commit changes:
-
-```bash
-git commit -m "Add new feature"
-```
-
-4. Push changes:
-
-```bash
-git push origin feature-name
-```
-
-5. Open a Pull Request
-
----
-
-# 📄 License
-
-This project is open-source and available under the MIT License.
-
----
-
-# 👩‍💻 Author
+## 👩‍💻 Author
 
 **Harini Mannam**
+[Portfolio](https://hariniport-hwshwlfa.manus.space/) · [LinkedIn](https://www.linkedin.com/in/harini-mannam-052aa730b/) · [GitHub](https://github.com/harini84-mannam)
 
-GitHub:
-https://github.com/harini84-mannam
-
----
-
-⭐ If you like this project, consider giving it a star!
+Built during my Software Development Internship at Meslova Systems.
